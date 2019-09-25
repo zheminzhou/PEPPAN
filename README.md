@@ -171,5 +171,18 @@ inference=ortholog_group:<source_genome>:<exemplar_gene>:<allele_ID>:<start & en
 ## Outputs for PEPPA_parse.py
 PEPPA_parse.py generates: 
 
-1. <prefix>.gene_content.matrix or <prefix>.CDS_content.matrix
-2. <prefix>.gene_content.nwk or <prefix>.CDS_content.nwk
+1. &lt;prefix&gt;.gene_content.matrix or &lt;prefix&gt;.CDS_content.matrix
+
+A matrix of gene presence/absence in all genomes.
+
+2. &lt;prefix&gt;.gene_content.nwk or &lt;prefix&gt;.CDS_content.nwk
+
+A tree built based on gene presence/absence in all genomes.
+
+3. &lt;prefix&gt;.gene_content.curve or &lt;prefix&gt;.CDS_content.curve
+
+The rare-fraction curves for the pan-genome and core-genome
+
+4. &lt;prefix&gt;.gene_CGAV.tree or &lt;prefix&gt;.CDS_CGAV.tree
+
+Core Genome Allelic Variation trees based on the sequence differences of the core genes. This is similar to  but should not be treated as a cgMLST scheme, because the genes included in the analysis depend on the genomes. The result of CGAV analysis is not comparable across different analyses. 
