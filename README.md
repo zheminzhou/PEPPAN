@@ -1,7 +1,19 @@
 # PEPPA
-Phylogeny Enhanded Prediction of PAn-genome
+**P**hylogeny **E**nhanded **P**rediction of **PA**n-genome
 
-## Examples --- example.bash
+## General description
+**PEPPA** aligns reference genes to genomes or genome assemblies, to generate similarity-based gene predictions for these genomes. Genes that are similar to the same reference gene are assigned to a single orthologous group, which is further refined using a phylogeny-aware algorithm. The workflow is:
+1. Retrieve **seed genes** from genome annotations of GFF format. These can be from published annotations or *ab initio* predictions created by, eg, prodigal or prokka. 
+2. Cluster seed genes into groups using MMseqs linclust. A collection of **exemplar genes** is assembled by selecting the centroid sequence of each group. 
+3. Align exemplar genes to queried genomes using both BLASTn and uSearch (optional), to identify homologous regions that are similar to each exemplar gene. 
+4. Identify and process putative paralogs. Sets of homologous regions containing potential paralogs are identified if there are duplicate matches to a single genome. These regions are iteratively sub-clustered based on their phylogenetic topology: 
+    * Firstly, each set of sets of homologous regions are aligned together. 
+    * Second, the resulting alignment is used to generate a neighbor-joining tree (RapidNJ; default) or Maximum likelihood tree (FastTree). 
+    * Third, the ETE3 package is used to partition this tree into a set of subtrees that maximises the nucleotide diversity (at least 5%) between subtrees. Each resulting subtree is evaluated iteratively until no two regions from the same genome are included in a single subtree, or until the maximum inter-subtree diversity is less than 5%. 
+    * Finally, the original set of homologous regions is replaced by all of its sub-trees.
+5. After the division process, all the homolog sets are scored and ranked according to the summarised alignment scores of their homolog regions. Homolog sets are discarded if they have regions which overlap with the regions within other sets that had greater scores.
+
+## Quick Start (included in example.bash)
 ```
 $ cat example.bash
 # generate pan-genome prediction using PEPPA
