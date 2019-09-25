@@ -9,7 +9,7 @@
 4. Identify and process putative paralogs. Sets of homologous regions containing potential paralogs are identified if there are duplicate matches to a single genome. These regions are iteratively sub-clustered based on their phylogenetic topology: 
     * Firstly, each set of sets of homologous regions are aligned together. 
     * Second, the resulting alignment is used to generate a neighbor-joining tree (RapidNJ; default) or Maximum likelihood tree (FastTree). 
-    * Third, the ETE3 package is used to partition this tree into a set of subtrees that maximises the nucleotide diversity (at least 5%) between subtrees. Each resulting subtree is evaluated iteratively until no two regions from the same genome are included in a single subtree, or until the maximum inter-subtree diversity is less than 5%. 
+    * Third, the ETE3 package is used to partition this tree into a set of subtrees that maximises the nucleotide diversity between subtrees. Each resulting subtree is evaluated iteratively until no two regions from the same genome are included in a single subtree. 
     * Finally, the original set of homologous regions is replaced by all of its sub-trees.
 5. After the division process, all the homolog sets are scored and ranked according to the summarised alignment scores of their homolog regions. Homolog sets are discarded if they have regions which overlap with the regions within other sets that had greater scores.
 
