@@ -194,7 +194,7 @@ PEPPA_parser.py
     parser.add_argument('-P', '--pseudogene', help='[Default: Use Pseudogene] Flag to ignore pseudogenes in all analyses. ', default=False, action='store_true')
     parser.add_argument('-m', '--matrix', help='[Default: False] Flag to generate the gene present/absent matrix', default=False, action='store_true')
     parser.add_argument('-t', '--tree', help='[Default: False] Flag to generate the gene present/absent tree', default=False, action='store_true')
-    parser.add_argument('-a', '--cgav', help='[Default: -1] Set to an integer between 0 and 100 to apply a Core Gene Allelic Variation tree. \nThe value describes % of presence for a gene to be included in the analysis.\n This is similar to cgMLST tree but without an universal scheme', default=-1, type=int)
+    parser.add_argument('-a', '--cgav', help='[Default: -1] Set to an integer between 0 and 100 to apply a Core Gene Allelic Variation tree. \nThe value describes %% of presence for a gene to be included in the analysis. \nThis is similar to cgMLST tree but without an universal scheme. ', default=-1, type=int)
     parser.add_argument('-c', '--curve', help='[Default: False] Flag to generate a rarefraction curve. ', default=False, action='store_true')
     params = parser.parse_args(a)
     
