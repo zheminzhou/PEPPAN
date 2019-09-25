@@ -29,28 +29,26 @@ def splitGFF(gff, folder, prefix) :
     fout.close()
     logger('GFF files are saved under folder {0}'.format(folder))
 
-def getOrtho(fname) :
+def getOrtho(fname, noPseudogene=False) :
     ids = set([])
     groups = defaultdict(dict)
     with uopen(fname) as fin :
         for line in fin :
             part = line.strip().split('\t')
-            tag = {'CDS':2, 'pseudogene':1}.get(part[1], 0)
-            if tag > 0 :
+            if part[1] == 'CDS' or (part[1] == 'pseudogene' and not noPseudogene) :
                 ID = re.findall(r'ID=([^;]+);', part[8])[0]
                 if ID in ids : continue
                 
-                genome = part[0].split(':', 1)[0].replace('_genomic', '')
-
+                genome = part[0].split(':', 1)[0]
+                grp = groups[genome]
                 ortho = re.findall(r'inference=ortholog_group:([^;]+)', part[8])[0]
-                orthos = [ o.split(':')[1] for o in ortho.split(',') ]
+                orthos = [ [o, int(aId) if aId.isdigit() else -1] for o, aId in [ o.split(':')[1:3] for o in ortho.split(',') ]]
 
-                groups[genome].update({ortho : max(tag, groups[genome].get(ortho, 0)) for ortho in orthos})
+                grp.update({ ortho:(aId if ortho not in grp else -2) for ortho, aId in orthos })
                 ids.add(ID)
     return groups
 
 def writeCurve(prefix, groups, pseudogene=True, n_iter=300) :
-    prefix2 = '{0}.{1}'.format(prefix, ['CDS_content', 'gene_content'][int(pseudogene)])
     gtype = ['CDSs', 'genes'][int(pseudogene)]
     encode = {}
     count = {}
@@ -58,7 +56,7 @@ def writeCurve(prefix, groups, pseudogene=True, n_iter=300) :
         for g in grp.keys() :
             if g not in encode :
                 encode[g] = len(encode)
-    mat = [ set([encode[g] for g, c in grp.items() if pseudogene or c > 1]) for grp in groups.values() ]
+    mat = [ set([ encode[g] for g, c in grp.items() ]) for grp in groups.values() ]
     mat = [np.array(list(m)) for m in mat]
     ids, cnts = np.unique(np.concatenate(mat), return_counts=True)
     x = np.arange(len(mat))+1
@@ -86,7 +84,7 @@ def writeCurve(prefix, groups, pseudogene=True, n_iter=300) :
         for j in np.arange(3) :
             popt = np.sort(popts[:, i, j])
             popt_sum[i, j, :] = popt[int(popt.size*0.025)], popt[int(popt.size*0.5)], popt[int(popt.size*0.975)]
-    with open('{0}.curve'.format(prefix2), 'w') as fout :
+    with open('{0}_content.curve'.format(prefix), 'w') as fout :
         fout.write('#! No. genomes: {0}\n'.format(len(groups)))
         fout.write('#! Ave. {1} per genome: {0:.03f}\n'.format(np.mean([m.size for m in mat]), gtype))
         fout.write('#! No. pan {1}: {0}\n'.format(len(encode), gtype))
@@ -101,47 +99,83 @@ def writeCurve(prefix, groups, pseudogene=True, n_iter=300) :
             pan_s =  [  pan[int(pan.size*0.025)],   pan[int(pan.size*0.5)],   pan[int(pan.size*0.975)]  ]
             core_s = [ core[int(core.size*0.025)], core[int(core.size*0.5)], core[int(core.size*0.975)] ]
             fout.write('{0}\t{1[1]}\t{1[0]}\t{1[2]}\t|\t{2[1]}\t{2[0]}\t{2[2]}\n'.format(id+1, pan_s, core_s))
-    logger('Curves for {1} are saved in {0}.curve'.format(prefix2, ['CDS', 'all genes'][int(pseudogene)]))
+    logger('Curves for {1} are saved in {0}_content.curve'.format(prefix, ['CDS', 'all genes'][int(pseudogene)]))
     return popt_sum, summary
 
 def writeMatrix(prefix, ortho) :
     genomes = sorted(ortho.keys())
     genes = defaultdict(int)
     for gs in ortho.values() :
-        for g, n in gs.items() :
-            genes[g] += int(n>0)
-    genes = [g[0] for g in sorted(genes.items(), key=lambda x:(-x[1], x[0]))]
-    with open('{0}.gene_content.matrix'.format(prefix), 'w') as fout :
+        for g, i in gs.items() :
+            genes[g] += 1
+    genes = [ g[0] for g in sorted(genes.items(), key=lambda x:(-x[1], x[0])) ]
+    with open('{0}_content.matrix'.format(prefix), 'w') as fout :
         fout.write('\t'.join(['#']+genomes)+'\n')
         for g in genes :
-            mat = [ ['-', 'p', 'c'][ortho[genome].get(g, 0)] for genome in genomes ]
+            mat = [ ['0', '1'][ g in ortho[genome] ] for genome in genomes ]
             fout.write('\t'.join([g] + mat)+'\n')
-    logger('Gene content matrix is saved in {0}.gene_content.matrix'.format(prefix))
+    logger('Gene content matrix is saved in {0}_content.matrix'.format(prefix))
 
+def writeCGAV(prefix, ortho, pCore) :
+    genomes = sorted(ortho.keys())
+    minPresence = len(ortho) * pCore/100.
+    genes = defaultdict(int)
+    for gs in ortho.values() :
+        for g, i in gs.items() :
+            if i > 0 :
+                genes[g] += 1
+    genes = sorted([ gene for gene, presence in genes.items() if presence >= minPresence ])
+    profiles = []
+    with open('{0}_CGAV.profile'.format(prefix), 'w') as fout :
+        fout.write('\t'.join(['#Genome'] + genes) + '\n')
+        for genome in genomes :
+            grp = ortho[genome]
+            profiles.append([ max(grp.get(g, 0), 0) for g in genes ] )
+            fout.write('{0}\t{1}\n'.format( genome, '\t'.join([ str(allele) for allele in profiles[-1] ]) ))
+    
+    distances = getDistance( np.array(profiles) )
+    with open('{0}_CGAV.dist'.format(prefix), 'w') as fout :
+        fout.write('    {0}\n'.format(len(genomes)))
+        for genome, dist in zip(genomes, distances) :
+            fout.write('{0} {1}\n'.format(genome, ' '.join(dist.astype(str))))
+    
+    subprocess.Popen('''{rapidnj} -i pd {0}_CGAV.dist | sed "s/'//g"  > {0}_CGAV.nwk'''.format(prefix, **externals), stderr=subprocess.PIPE, shell=True).wait()
+    logger('Core gene allelic variation profile is saved in {0}_CGAV.profile'.format(prefix))
+    logger('Core gene allelic variation tree is saved in {0}_CGAV.nwk'.format(prefix))
+    
+def getDistance(profiles) :
+    distances = np.zeros([profiles.shape[0], profiles.shape[0]], dtype=float)
+    contents = (profiles > 0)
+    for i, p in enumerate(profiles) :
+        c, j = contents[i], i+1
+        shared, presence = np.sum((p == profiles[j:]) & (contents[j:]*c), 1)+0.5, np.sum(contents[j:]*c, 1)+1.
+        distances[i, j:] = distances[j:, i] = -np.log(shared/presence)
+    return distances
 
 def writeTree(prefix, ortho) :
     genes = sorted({g for gs in ortho.values() for g in gs})
-    with open('{0}.gene_content.fas'.format(prefix), 'w') as fout :
+    with open('{0}_content.fas'.format(prefix), 'w') as fout :
         for genome, content in ortho.items() :
             fout.write('>{0}\n{1}\n'.format(genome, ''.join([['A','T'][int(g in content)] for g in genes ])))
-    subprocess.Popen('{fasttree} -quiet -nt {0}.gene_content.fas > {0}.gene_content.nwk'.format(prefix, **externals), shell=True).wait()
-    logger('Gene content tree is saved in {0}.gene_content.nwk'.format(prefix))
+    subprocess.Popen('{fasttree} -quiet -nt {0}_content.fas > {0}_content.nwk'.format(prefix, **externals), shell=True).wait()
+    logger('Gene content tree is saved in {0}_content.nwk'.format(prefix))
 
 def PEPPA_parser(args) :
     param = arg_parser(args)
     if param.split :
         splitGFF(param.gff, param.split, param.prefix)
     if param.matrix or param.tree or param.curve :
-        ortho = getOrtho(param.gff)
+        target = ['gene', 'CDS'][int(param.pseudogene)]
+        prefix = '{0}.{1}'.format(param.prefix, target)
+        ortho = getOrtho(param.gff, param.pseudogene)
         if param.matrix :
-            writeMatrix(param.prefix, ortho)
+            writeMatrix(prefix, ortho)
         if param.tree :
-            writeTree(param.prefix, ortho)
+            writeTree(prefix, ortho)
+        if param.cgav >= 0 :
+            writeCGAV(prefix, ortho, param.cgav)
         if param.curve :
-            if param.curve % 2 > 0 :
-                writeCurve(param.prefix, ortho, True)
-            if param.curve >= 2 :
-                writeCurve(param.prefix, ortho, False)
+            writeCurve(prefix, ortho, not param.pseudogene)
     
     
 def arg_parser(a) :
@@ -157,9 +191,11 @@ PEPPA_parser.py
     parser.add_argument('-g', '--gff', help='[REQUIRED] generated PEPPA.gff file from PEPPA.py.', required=True)
     parser.add_argument('-p', '--prefix', help='[Default: Same prefix as GFF input] Prefix for all outputs.', default=None)
     parser.add_argument('-s', '--split', help='[optional] A folder for splitted GFF files. ', default=None)
+    parser.add_argument('-P', '--pseudogene', help='[Default: Use Pseudogene] Flag to ignore pseudogenes in all analyses. ', default=False, action='store_true')
     parser.add_argument('-m', '--matrix', help='[Default: False] Flag to generate the gene present/absent matrix', default=False, action='store_true')
     parser.add_argument('-t', '--tree', help='[Default: False] Flag to generate the gene present/absent tree', default=False, action='store_true')
-    parser.add_argument('-c', '--curve', help='[Default: 0] Choose to generate a rarefraction curve. \n0: No rarefraction curve. \n1: use all genes/pseudogenes. \n2: use only intact CDS. \n3: two curves for intact CDS only and for all genes/pseudogenes.', default=0, type=int)
+    parser.add_argument('-a', '--cgav', help='[Default: -1] Set to an integer between 0 and 100 to apply a Core Gene Allelic Variation tree. \nThe value describes % of presence for a gene to be included in the analysis.\n This is similar to cgMLST tree but without an universal scheme', default=-1, type=int)
+    parser.add_argument('-c', '--curve', help='[Default: False] Flag to generate a rarefraction curve. ', default=False, action='store_true')
     params = parser.parse_args(a)
     
     assert params.split or params.matrix or params.tree or params.curve, 'At least one type of output needs to be specified. '
