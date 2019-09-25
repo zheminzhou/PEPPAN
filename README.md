@@ -153,7 +153,7 @@ optional arguments:
 ## Outputs for PEPPA.py
 There are two final outputs for PEPPA.py:
 
-1. <prefix>.PEPPA.gff
+1. &lt;prefix&gt;.PEPPA.gff
    
    This file includes all pan-genes predicted by PEPPA in GFF3 format. Intact CDSs are assigned as "CDS", disrupted genes (potential pseudogenes) are assigned as "pseudogene" and suspicious annotations that are removed are described as "misc_feature" entries. 
 
@@ -164,7 +164,7 @@ There are two final outputs for PEPPA.py:
 inference=ortholog_group:<source_genome>:<exemplar_gene>:<allele_ID>:<start & end coordinates of alignment in the exemplar gene>:<start & end coordinates of alignmenet in the genome>
 ~~~~~~~~
 
-2. <prefix>.alleles.fna
+2. &lt;prefix&gt;.alleles.fna
    
    This file contains all the unique alleles of all pan genes predicted by PEPPA. 
 
