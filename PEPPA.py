@@ -19,7 +19,7 @@ params = dict(
 
 def in1d(arr1, arr2, invert=False) :
     darr2 = set(arr2)
-    res = np.array([n in darr2 for n in arr1.flatten()])
+    res = np.array([n in darr2 for n in np.array(arr1).flatten()])
     return ~res if invert else res
 
 class MapBsn(object) :
@@ -515,7 +515,7 @@ def filt_genes(prefix, groups, ortho_groups, global_file, cfl_file, priorities, 
     clust_ref = { int(n):s for n, s in readFasta(params['clust']).items()}
     
     used, pangenome, panList = {}, {}, {}
-    
+    lowest_p = max([v[0] for v in priorities.values()])    
     while len(scores) > 0 :
         # get top 100 genes
         ortho_groups = ortho_groups[np.all(in1d(ortho_groups, list(scores.keys())).reshape(ortho_groups.shape), 1)]
@@ -596,6 +596,7 @@ def filt_genes(prefix, groups, ortho_groups, global_file, cfl_file, priorities, 
                         conflicts[ng] = { mid:cfl.pop(mid, {}) for mid in matches.T[5] }
                         scores[ng] = np.sum(np.abs(matches[np.unique(matches.T[1], return_index=True)[1]].T[2]))
                         priorities[ng] = priorities[gene][:]
+                        priorities[ng][0] = lowest_p
         else :
             for gene, score in genes.items() :
                 if gene not in new_groups :
@@ -711,6 +712,7 @@ def writeGenomes(fname, seqs) :
 
 def iter_map_bsn(data) :
     prefix, clust, id, taxon, seq, orthoGroup, old_prediction, params = data
+    stop = ['TAG', 'TAA', 'TGA'] if params['gtable'] != 4 else ['TAA', 'TAG']
     gfile, out_prefix = '{0}.{1}.genome'.format(prefix, id), '{0}.{1}'.format(prefix, id)
     with open(gfile, 'w') as fout :
         for n, s in seq :
@@ -778,9 +780,12 @@ def iter_map_bsn(data) :
                 else :
                     ms.append('-'*s)
                     f = (f+s)%3
-            x = baseConv[np.array(list(''.join(ms))).view(asc2int)]
-            group[4][tab[6]-1:tab[6]+len(x)-1] = x
+            ms = ''.join(ms)
             sc = np.max(sc)
+            sc2 = np.max(np.diff(np.concatenate([[0], np.where(in1d(re.findall('...', ms), stop))[0]*3, [len(ms)]])))
+            sc = np.min([sc, sc2+3])
+            x = baseConv[np.array(list(ms)).view(asc2int)]
+            group[4][tab[6]-1:tab[6]+len(x)-1] = x
             r = 2./(1./(float(sc)/tab[12]) + 1./tab[10]) if float(sc)/tab[12] > tab[10] else float(sc)/tab[12]
             msc = (sc * tab[2])*np.sqrt(sc*r)
             amsc = float(msc)/(tab[7]-tab[6]+1)

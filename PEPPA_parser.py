@@ -18,6 +18,8 @@ def splitGFF(gff, folder, prefix) :
     prev, fout = None, None
     with uopen(gff) as fin :
         for line in fin :
+            if line.startswith('#') :
+                continue
             header, line = line.split(':', 1)
             if header != prev :
                 prev = header
@@ -34,6 +36,8 @@ def getOrtho(fname, noPseudogene=False) :
     groups = defaultdict(dict)
     with uopen(fname) as fin :
         for line in fin :
+            if line.startswith('#') :
+                continue            
             part = line.strip().split('\t')
             if part[1] == 'CDS' or (part[1] == 'pseudogene' and not noPseudogene) :
                 ID = re.findall(r'ID=([^;]+);', part[8])[0]
@@ -164,7 +168,7 @@ def PEPPA_parser(args) :
     param = arg_parser(args)
     if param.split :
         splitGFF(param.gff, param.split, param.prefix)
-    if param.matrix or param.tree or param.curve :
+    if param.matrix or param.tree or param.curve or param.cgav >= 0 :
         target = ['gene', 'CDS'][int(param.pseudogene)]
         prefix = '{0}.{1}'.format(param.prefix, target)
         ortho = getOrtho(param.gff, param.pseudogene)
@@ -198,7 +202,7 @@ PEPPA_parser.py
     parser.add_argument('-c', '--curve', help='[Default: False] Flag to generate a rarefraction curve. ', default=False, action='store_true')
     params = parser.parse_args(a)
     
-    assert params.split or params.matrix or params.tree or params.curve, 'At least one type of output needs to be specified. '
+    assert params.split or params.matrix or params.tree or params.curve or params.cgav >= 0, 'At least one type of output needs to be specified. '
     if not params.prefix : 
         params.prefix = params.gff.rsplit('.gff', 1)[0]
     
