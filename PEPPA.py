@@ -719,10 +719,10 @@ def iter_map_bsn(data) :
             fout.write('>{0}\n{1}\n'.format(n, s) )
 
     if params['noDiamond'] :
-        blastab, overlap = uberBlast('-r {0} -q {1} -f -m -O --blastn --min_id {2} --min_cov {3} --min_ratio {4} --merge_gap {5} --merge_diff {6} -t 2 -e 0,3 --gtable {7}'.format(\
+        blastab, overlap = uberBlast('-r {0} -q {1} -f -m -O --blastn --min_id {2} --min_cov {3} --min_ratio {4} --merge_gap {5} --merge_diff {6} -e 0,3 --gtable {7}'.format(\
             gfile, clust, params['match_identity']-0.1, params['match_frag_len'], params['match_frag_prop'], params['link_gap'], params['link_diff'], params['gtable'] ).split())
     else :
-        blastab, overlap = uberBlast('-r {0} -q {1} -f -m -O --blastn --diamond --min_id {2} --min_cov {3} --min_ratio {4} --merge_gap {5} --merge_diff {6} -t 2 -s 1 -e 0,3 --gtable {7}'.format(\
+        blastab, overlap = uberBlast('-r {0} -q {1} -f -m -O --blastn --diamond --min_id {2} --min_cov {3} --min_ratio {4} --merge_gap {5} --merge_diff {6} -s 1 -e 0,3 --gtable {7}'.format(\
             gfile, clust, params['match_identity']-0.1, params['match_frag_len'], params['match_frag_prop'], params['link_gap'], params['link_diff'], params['gtable'] ).split())
     os.unlink(gfile)
     blastab.T[:2] = blastab.T[:2].astype(int)
