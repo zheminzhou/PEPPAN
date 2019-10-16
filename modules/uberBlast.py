@@ -529,6 +529,7 @@ class RunBlast(object) :
             diamond_cmd = '{diamond} blastp --no-self-hits --threads {n_thread} --db {refAA} --query {qryAA} --out {aaMatch} --id {min_id} --query-cover {min_ratio} --evalue 1 -k {nhits} --dbsize 5000000 --outfmt 101'.format(
                 diamond=diamond, refAA=refAA, qryAA=qryAA, aaMatch=aaMatch, n_thread=self.n_thread, min_id=self.min_id*100., nhits=nhits, min_ratio=self.min_ratio*100.)
             p = Popen(diamond_cmd.split(), stdout=PIPE, stderr=PIPE, universal_newlines=True).communicate()
+            tab = None
             if os.path.getsize(aaMatch) > 0 :
                 tab = parseDiamond(open(aaMatch), self.refSeq, self.qrySeq, self.min_id, self.min_cov, self.min_ratio)
                 os.unlink(aaMatch)
@@ -566,7 +567,7 @@ def uberBlast(args, extPool=None) :
     parser.add_argument('--overlap_length', help='[DEFAULT: 300] Minimum overlap to report', default=300, type=float)
     parser.add_argument('--overlap_proportion', help='[DEFAULT: 0.6] Minimum overlap proportion to report', default=0.6, type=float)
     parser.add_argument('-e', '--fix_end', help='[FORMAT: L,R; DEFAULT: 0,0] Extend alignment to the edges if the un-aligned regions are <= [L,R] basepairs.', default='0,0')
-    parser.add_argument('-t', '--n_thread', help='[DEFAULT: 8] Number of threads to use. ', type=int, default=8)
+    parser.add_argument('-t', '--n_thread', help='[DEFAULT: 8] Number of threads to use. ', type=int, default=1)
     parser.add_argument('-p', '--process', help='[DEFAULT: False] Use processes instead of threads. ', action='store_true', default=False)
     
     args = parser.parse_args(args)
