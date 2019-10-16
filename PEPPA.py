@@ -1173,9 +1173,8 @@ def determineGeneStructure(data) :
     return pid, cds, start, stop
 
 def write_output(prefix, prediction, genomes, clust_ref, encodes, old_prediction, pseudogene, untrusted, gtable, clust=None, orthoPair=None) :
-    alleles = {}
-    
     def addOld(opd) :
+        # old genes in the predictions are not all included in the predicted pan-genome due to varies reasons. They are added in here
         if opd[4] == 0 :
             return [opd[0], -1, -1, op[0], opd[0], op[0], 1., 1, opd[2]-opd[1]+1, opd[1], opd[2], opd[3], 0, 0, [0], 'CDS', '{0}:{1}-{2}'.format(opd[0].split(':', 1)[1], opd[1], opd[2])]
         else :
@@ -1185,17 +1184,18 @@ def write_output(prefix, prediction, genomes, clust_ref, encodes, old_prediction
                 reason = 'Overlap_with:{0}_g_{1}'.format(prefix, int(opd[4]/10))
             return [opd[0], -1, -1, op[0], opd[0], op[0], 1., 1, opd[2]-opd[1]+1, opd[1], opd[2], opd[3], 0, 0, -1, 'misc_feature', reason]
     def setInFrame(part) :
+        # re-locate start and end points of the alignment, making sure that it is in the coding frame of the representative gene
         if part[9] < part[10] :
             l, r, d = min(part[7]-1, part[9]-1), min(part[12]-part[8], part[13]-part[10]), 1
         else :
             l, r, d = min(part[7]-1, part[13]-part[9]), min(part[12]-part[8], part[10]-1), -1
-        if l <= 6 and part[7] - l == 1 :
+        if l <= 9 and part[7] - l == 1 :
             part[7], part[9] = part[7]-l, part[9]-l*d
         else :
             ll = (part[7]-1) % 3
             if ll > 0 :
                 part[7], part[9] = part[7]+3-ll, part[9]+(3-ll)*d
-        if r <= 6 and part[8] + r == part[12] :
+        if r <= 9 and part[8] + r == part[12] :
             part[8], part[10] = part[8]+r, part[10]+r*d
         else :
             rr = (part[12] - part[8]) % 3
@@ -1211,6 +1211,7 @@ def write_output(prefix, prediction, genomes, clust_ref, encodes, old_prediction
         setInFrame(part)
 
     for id, part in enumerate(prediction[1:]) :
+        # if two sequential alignments are from the same representative gene, try to merge them together
         prev = prediction[id]
         if part[2] == prev[2] and part[11] == prev[11] and prev[5] == part[5] and part[9] - prev[10] < 500 :
             if part[11] == '+' and part[7] - prev[8] < 500 :
@@ -1225,14 +1226,14 @@ def write_output(prefix, prediction, genomes, clust_ref, encodes, old_prediction
                 part[8], part[9] = prev[8], prev[9]
                 part[14] = part[14] + diff + prev[14]
                 prev[0] = ''
-    prediction = prediction[prediction.T[0] != '']
+    
+    prediction = prediction[prediction.T[0] != '']  # remove redundant alignment
     _, gTag, gIdx, gCnt = np.unique(prediction.T[2], return_counts=True, return_inverse=True, return_index=True)
     prediction.T[1] = gCnt[gIdx]
     prediction.T[2] = gTag[gIdx]+1
 
-    # map to old annotation
-    op = ['', 0, []]
-    old_to_add = []
+    # compare with old annotation and add in old genes if they are not included in the new annotation
+    op, old_to_add = ['', 0, []], []
     for pred in prediction :
         pred[14] = sorted(np.unique(np.cumsum([0]+[int(n) if t == 'D' else -int(n) for n, t in re.findall(r'(\d+)([ID])', pred[14])])%3))
         if pred[5] != op[0] :
@@ -1277,7 +1278,8 @@ def write_output(prefix, prediction, genomes, clust_ref, encodes, old_prediction
     for g in old_to_add :
         maxTag += 1
         g[2] = maxTag
-    # rescue
+        
+    # build orthologous groups for missing genes
     old_genes = [ encodes[g[0]] for g in old_to_add if g[15] == 'CDS' ]
     if len(old_genes) :
         queries = set(old_genes)
@@ -1310,12 +1312,14 @@ def write_output(prefix, prediction, genomes, clust_ref, encodes, old_prediction
                 if g[15] == 'CDS' :
                     g[0] = decodes[tags[encodes[g[0]]]]
 
+    # reorder genes after adding old genes
     if len(old_to_add) :
         prediction = pd.DataFrame(np.vstack([prediction, np.array(list(old_to_add))])).sort_values(by=[5,9]).values
     else :
         prediction = pd.DataFrame(prediction).sort_values(by=[5,9]).values
     prediction[np.array([p.rsplit('/', 1)[0].rsplit('#', 1)[0] for p in prediction.T[4]]) == np.array([p.rsplit('/', 1)[0].rsplit('#', 1)[0] for p in prediction.T[0]]), 4] = ''
     
+    # add representative genes as allele 1
     for part in prediction :
         if part[0] not in alleles :
             alleles[part[0]] = {}
@@ -1340,7 +1344,11 @@ def write_output(prefix, prediction, genomes, clust_ref, encodes, old_prediction
                 
             pred2 = None
             if pred[1] > 1 or (pred[10]-pred[9]+1) < pred[12] - allowed_vary :
-                cds, pred[13] = 'fragment:{0:.2f}%'.format((pred[10]-pred[9]+1)*100/pred[12]), map_tag.format('ND')
+                cds = 'fragment:{0:.2f}%'.format((pred[10]-pred[9]+1)*100/pred[12])
+                s, e = pred[9:11]
+                seq2 = genomes[encodes[pred[5]]][1][(s-1):e] if pred[11] == '+' else rc(genomes[encodes[pred[5]]][1][(s-1):e])
+                alleles[pred[0]][seq2] = 't{0}'.format(len(alleles[pred[0]])+1)
+                pred[13] = map_tag.format(alleles[pred[0]][seq2])
             else :
                 s, e = pred[9:11]
                 if pred[11] == '+' :
