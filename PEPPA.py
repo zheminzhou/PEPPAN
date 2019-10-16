@@ -1318,7 +1318,8 @@ def write_output(prefix, prediction, genomes, clust_ref, encodes, old_prediction
     else :
         prediction = pd.DataFrame(prediction).sort_values(by=[5,9]).values
     prediction[np.array([p.rsplit('/', 1)[0].rsplit('#', 1)[0] for p in prediction.T[4]]) == np.array([p.rsplit('/', 1)[0].rsplit('#', 1)[0] for p in prediction.T[0]]), 4] = ''
-    
+
+    alleles = {}
     # add representative genes as allele 1
     for part in prediction :
         if part[0] not in alleles :
