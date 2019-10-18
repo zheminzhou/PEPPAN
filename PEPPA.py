@@ -1317,12 +1317,13 @@ def write_output(prefix, prediction, genomes, clust_ref, encodes, old_prediction
         prediction = pd.DataFrame(np.vstack([prediction, np.array(list(old_to_add))])).sort_values(by=[5,9]).values
     else :
         prediction = pd.DataFrame(prediction).sort_values(by=[5,9]).values
+    # if the secondary repr gene is the same as the primary gene, remove it
     prediction[np.array([p.rsplit('/', 1)[0].rsplit('#', 1)[0] for p in prediction.T[4]]) == np.array([p.rsplit('/', 1)[0].rsplit('#', 1)[0] for p in prediction.T[0]]), 4] = ''
 
-    alleles = {}
     # add representative genes as allele 1
+    alleles = {}
     for part in prediction :
-        if part[0] not in alleles :
+        if part[0] not in alleles and pred[15] != 'misc_feature' :
             alleles[part[0]] = {}
             if part[0] in encodes :
                 gId = encodes[part[0]]
@@ -1409,7 +1410,7 @@ def write_output(prefix, prediction, genomes, clust_ref, encodes, old_prediction
             cdss[pred[0]] = [0, 0, 0, 0]
         cdss[pred[0]][2] += 1
         if pred[16] != '' :
-            cdss[pred[0]][3] += 1.        
+            cdss[pred[0]][3] += 1.
         if pred[0] != '' and pred[15] == 'CDS' :
             cdss[pred[0]][0] += 1.
             if pred[16] != '' :
