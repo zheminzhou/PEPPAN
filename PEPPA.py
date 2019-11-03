@@ -1323,7 +1323,7 @@ def write_output(prefix, prediction, genomes, clust_ref, encodes, old_prediction
     # add representative genes as allele 1
     alleles = {}
     for part in prediction :
-        if part[0] not in alleles and pred[15] != 'misc_feature' :
+        if part[0] not in alleles and part[15] != 'misc_feature' :
             alleles[part[0]] = {}
             if part[0] in encodes :
                 gId = encodes[part[0]]
@@ -1349,7 +1349,8 @@ def write_output(prefix, prediction, genomes, clust_ref, encodes, old_prediction
                 cds = 'fragment:{0:.2f}%'.format((pred[10]-pred[9]+1)*100/pred[12])
                 s, e = pred[9:11]
                 seq2 = genomes[encodes[pred[5]]][1][(s-1):e] if pred[11] == '+' else rc(genomes[encodes[pred[5]]][1][(s-1):e])
-                alleles[pred[0]][seq2] = 't{0}'.format(len(alleles[pred[0]])+1)
+                if seq2 not in alleles[pred[0]] :
+                    alleles[pred[0]][seq2] = 't{0}'.format(len(alleles[pred[0]])+1)
                 pred[13] = map_tag.format(alleles[pred[0]][seq2])
             else :
                 s, e = pred[9:11]
@@ -1605,7 +1606,7 @@ PEPPA.py
     parser.add_argument('--pseudogene', help='A match is reported as pseudogene if its coding region is less than this amount of the reference gene. Default: 0.8', default=.8, type=float)
     parser.add_argument('--untrusted', help='FORMAT: l,p; A gene is not reported if it is shorter than l and present in less than p of prior annotations. Default: 300,0.3', default='300,0.3')
     parser.add_argument('--metagenome', help='Set to metagenome mode. equals to \n"--nucl --incompleteCDS sife --clust_identity 0.99 --clust_match_prop 0.8 --match_identity 0.98 --orthology sbh"', default=False, action='store_true')
-
+    parser.add_argument('--continue', help='continue from a previously stopped run.', default=False, action='store_true')
     #parser.add_argument('--old_prediction', help='development param', default=None)
     #parser.add_argument('--encode', help='development param', default=None)
     #parser.add_argument('--clust', help='development param', default=None)
@@ -1719,8 +1720,9 @@ def ortho(args) :
     priorities = load_priority(params.get('priority', ''), genes, encodes)
     geneInGenomes = { g:i[0] for g, i in genes.items() }
     
-    if params.get('old_prediction', None) is None :
-        params['old_prediction'] = params['prefix']+'.old_prediction.npz'
+    #if params.get('old_prediction', None) is None :
+    params['old_prediction'] = params['prefix']+'.old_prediction.npz'
+    if not params['continue'] or not os.path.isfile(params['old_prediction']) :
         old_predictions = {}
         for n, g in genes.items() :
             if '' not in encodes or g[1] != encodes[''] :
@@ -1736,31 +1738,36 @@ def ortho(args) :
         old_predictions.clear()
         del old_predictions, n, g
     
-    if params.get('prediction', None) is None :
-        params['prediction'] = params['prefix'] + '.Prediction'
+    #if params.get('prediction', None) is None :
+    params['prediction'] = params['prefix'] + '.Prediction'
+    if not params['continue'] or not os.path.isfile(params['prediction']) :
 
-        if params.get('clust', None) is None :
+        #if params.get('clust', None) is None :
+        params['clust'] = params['prefix'] + '.clust.exemplar'
+        if not params['continue'] or not os.path.isfile(params['clust']) :
             params['genes'], groups = writeGenes('{0}.genes'.format(params['prefix']), genes, priorities)
             genes.clear()
             del genes
             logger('Run MMSeqs linclust to get exemplar sequences. Params: {0} identities and {1} align ratio'.format(params['clust_identity'], params['clust_match_prop']))
             params['clust'] = iterClust(params['prefix'], params['genes'], groups, dict(identity=params['clust_identity'], coverage=params['clust_match_prop'], n_thread=params['n_thread'], translate=False))
         
-        if params.get('self_bsn', None) is None :
-            params['self_bsn'] = params['prefix']+'.self_bsn.npy'
+        #if params.get('self_bsn', None) is None :
+        params['self_bsn'] = params['prefix']+'.self_bsn.npy'
+        if not params['continue'] or not os.path.isfile(params['self_bsn']) :
             np.save(params['self_bsn'], get_similar_pairs(params['prefix'], params['clust'], priorities, params))
         genes = { int(n):s for n, s in readFasta(params['clust']).items()}
         logger('Obtained {0} exemplar gene sequences from {1}'.format(len(genes), params['clust']))
 
-        if params.get('global', None) is None :
-            params['global'] = params['prefix']+'.global.npy'
+        #if params.get('global', None) is None :
+        params['global'] = params['prefix']+'.global.npy'
+        if not params['continue'] or not os.path.isfile(params['global']) :
             np.save(params['global'], \
                     get_global_difference(get_gene_group(params['clust'], params['self_bsn']), \
                                           params['clust'], params['self_bsn'], geneInGenomes, nGene=1000) )
             
-        if params.get('map_bsn', None) is None :
-            params['map_bsn']= params['prefix']+'.map_bsn'
-            
+        #if params.get('map_bsn', None) is None :
+        params['map_bsn']= params['prefix']+'.map_bsn'
+        if not params['continue'] or not os.path.isfile(params['map_bsn']+'.tab.npz') :            
             with MapBsn(params['map_bsn']+'.tab.npz', 'w') as tab_conn, MapBsn(params['map_bsn']+'.seq.npz', 'w') as seq_conn, MapBsn(params['map_bsn']+'.mat.npz', 'w') as mat_conn, MapBsn(params['map_bsn']+'.conflicts.npz', 'w') as clf_conn :
                 get_map_bsn(params['prefix'], params['clust'], genomes, params['self_bsn'], params['old_prediction'], tab_conn, seq_conn, mat_conn, clf_conn, params.get('orthology', 'sbh') != 'sbh')
         pool.close()
@@ -1775,7 +1782,8 @@ def ortho(args) :
             filt_genes(params['prefix'], tab_conn, np.load(params['self_bsn'], allow_pickle=True), params['global'], params['map_bsn']+'.conflicts.npz', priorities, gene_scores, encodes)
         writeProcess.join()
     else :
-        if params.get('clust', None) :
+        params['clust'] = params['prefix'] + '.clust.exemplar'
+        if os.path.isfile(params['clust']) :
             genes = { int(n):s for n, s in readFasta(params['clust']).items()}
         else :
             genes = {n:s[-1] for n,s in genes.items() }
@@ -1784,8 +1792,8 @@ def ortho(args) :
         logger('Neigbhorhood based paralog splitting starts')
         params['prediction'] = synteny_resolver(params['prefix'], params['prediction'], 2)
         logger('Neigbhorhood based paralog splitting finishes')
-
-    old_predictions = dict(np.load(params['old_prediction'], allow_pickle=True)) if 'old_prediction' in params else {}
+    if os.path.isfile(params['old_prediction']) :
+        old_predictions = dict(np.load(params['old_prediction'], allow_pickle=True)) if 'old_prediction' in params else {}
     revEncode = {e:d for d, e in encodes.items()}
     old_predictions = { revEncode[int(contig)]:[np.concatenate([ [revEncode[g[0]]], g[1:]]) for g in genes ] for contig, genes in old_predictions.items() if int(contig)>=0 and genes[0][0] >= 0}
     write_output(params['prefix'], params['prediction'], genomes, genes, encodes, old_predictions, params['pseudogene'], params['untrusted'], params['gtable'], params.get('clust', None), params.get('self_bsn', None))
