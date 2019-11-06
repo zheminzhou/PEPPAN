@@ -1285,7 +1285,7 @@ def write_output(prefix, prediction, genomes, clust_ref, encodes, old_prediction
         queries = set(old_genes)
         groups = { g:[g] for g in old_genes }
         tags = None
-        if clust :
+        if clust and os.path.exists(clust) :
             clust = np.load(clust.rsplit('.', 1)[0] + '.npy', allow_pickle=True)
             while len(queries) :
                 c = clust[in1d(clust.T[1], list(queries))]
@@ -1296,7 +1296,7 @@ def write_output(prefix, prediction, genomes, clust_ref, encodes, old_prediction
                     else :
                         groups[grp].extend(groups.pop(gene, {}))
             tags = {ggg: g for g, gg in groups.items() for ggg in gg}
-        if orthoPair :
+        if orthoPair and os.path.exists(orthoPair) :
             clust = np.load(orthoPair, allow_pickle=True)
             clust = clust[np.all(in1d(clust, queries).reshape(clust.shape), 1)]
             for g1, g2, _ in clust :
@@ -1333,9 +1333,9 @@ def write_output(prefix, prediction, genomes, clust_ref, encodes, old_prediction
     for ppid in np.arange(0, len(prediction), 10000) :
         toRun = []
         for xid, pred in enumerate(prediction[ppid:ppid+10000]) :
-            pid = ppid + xid 
-            if pred[15] == 'misc_feature' or pred[0] == '' or pred[1] == -1 : 
-                pred[13] = '{0}:{1}:{2}-{3}:{4}-{5}'.format(pred[0], 't1', pred[7], pred[8], pred[9], pred[10])
+            pid = ppid + xid
+            if pred[15] == 'misc_feature' or pred[0] == '' : #or pred[1] == -1 : 
+                pred[13] = '{0}:{1}:{2}-{3}:{4}-{5}'.format(pred[0], 't0', pred[7], pred[8], pred[9], pred[10])
                 continue
             allowed_vary = int(pred[12]*(1-pseudogene)+0.01)
             
@@ -1393,7 +1393,7 @@ def write_output(prefix, prediction, genomes, clust_ref, encodes, old_prediction
                 pred[13] = map_tag.format(alleles[pred[0]][seq2])
                 
                 p = pred[0].rsplit('/', 1)[0].rsplit('#', 1)[0]
-                if len(seq2) < pseudogene*len(clust_ref[encodes[p]]) :
+                if encodes[p] in clust_ref and len(seq2) < pseudogene*len(clust_ref[encodes[p]]) :
                     cds = 'structral_variation:{0:.2f}%'.format(100.*len(seq2)/len(clust_ref[encodes[p]]))
                 else :
                     cds = 'CDS'
@@ -1416,7 +1416,7 @@ def write_output(prefix, prediction, genomes, clust_ref, encodes, old_prediction
             cdss[pred[0]][0] += 1.
             if pred[16] != '' :
                 cdss[pred[0]][1] += 1.
-    removed = {}
+    removed = {'':1}
     for gene, stat in cdss.items() :
         if (stat[1]+0.5) <= 0.5 + stat[0]*untrusted[1] and (stat[3]+0.5) <= 0.5 + stat[2]*untrusted[1] :
             if len(alleles[gene]) :
@@ -1434,9 +1434,9 @@ def write_output(prefix, prediction, genomes, clust_ref, encodes, old_prediction
 
     prediction = pd.DataFrame(prediction).sort_values(by=[5,9]).values
     for pid, pred in enumerate(prediction) :
-        if pred[0] != '' and pred[15] != 'misc_feature' :
+        if pred[0] not in removed and pred[15] != 'misc_feature' :
             for pred2 in prediction[pid+1:] :
-                if pred2[0] != '' and pred2[15] != 'misc_feature' :
+                if pred2[0] not in removed and pred2[15] != 'misc_feature' :
                     if pred[5] == pred2[5] :
                         if (pred[10]>=pred2[10] or pred2[9] <= pred[9]) :
                             p, p2 = (pred, pred2) if pred[10]-pred[9] >= pred2[10] - pred2[9] else (pred2, pred)
@@ -1637,7 +1637,7 @@ PEPPA.py
 
 def encodeNames(genomes, genes, geneFiles, prefix, labelFile=None) :
     taxon = {g[0] for g in genomes.values()}
-    if labelFile :
+    if labelFile and os.path.exists(labelFile) :
         labels = dict(pd.read_csv(labelFile, header=None, na_filter=False).values.tolist())
     else :
         labels = {label:labelId for labelId, label in enumerate( sorted(set(list(taxon) + list(genomes.keys()) + list(genes.keys()) + geneFiles.split(',')) ) )}
@@ -1716,6 +1716,7 @@ def ortho(args) :
     genomes, genes = readGFF(params['GFFs'], params['gtable'])
     genes = addGenes(genes, params['genes'], params['gtable'])
     
+    params['encode'] = params['prefix']+'.encode.csv'
     genomes, genes, encodes, labelFile = encodeNames(genomes, genes, params['genes'], params['prefix'], params.get('encode', None))
     priorities = load_priority(params.get('priority', ''), genes, encodes)
     geneInGenomes = { g:i[0] for g, i in genes.items() }
@@ -1796,6 +1797,10 @@ def ortho(args) :
         old_predictions = dict(np.load(params['old_prediction'], allow_pickle=True)) if 'old_prediction' in params else {}
     revEncode = {e:d for d, e in encodes.items()}
     old_predictions = { revEncode[int(contig)]:[np.concatenate([ [revEncode[g[0]]], g[1:]]) for g in genes ] for contig, genes in old_predictions.items() if int(contig)>=0 and genes[0][0] >= 0}
+    
+    
+    params['clust'] = params['prefix'] + '.clust.exemplar'
+    params['self_bsn'] = params['prefix']+'.self_bsn.npy'
     write_output(params['prefix'], params['prediction'], genomes, genes, encodes, old_predictions, params['pseudogene'], params['untrusted'], params['gtable'], params.get('clust', None), params.get('self_bsn', None))
     pool2.close()
     pool2.join()
