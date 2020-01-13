@@ -1313,9 +1313,9 @@ def write_output(prefix, prediction, genomes, clust_ref, encodes, old_prediction
                     g[0] = decodes[tags[encodes[g[0]]]]
 
     # reorder genes after adding old genes
-    if len(old_to_add) :
-        prediction = pd.DataFrame(np.vstack([prediction, np.array(list(old_to_add))])).sort_values(by=[5,9]).values
-    else :
+    try :
+        prediction = pd.DataFrame(np.vstack([prediction, np.array([g for g in old_to_add])])).sort_values(by=[5,9]).values
+    except :
         prediction = pd.DataFrame(prediction).sort_values(by=[5,9]).values
     # if the secondary repr gene is the same as the primary gene, remove it
     prediction[np.array([p.rsplit('/', 1)[0].rsplit('#', 1)[0] for p in prediction.T[4]]) == np.array([p.rsplit('/', 1)[0].rsplit('#', 1)[0] for p in prediction.T[0]]), 4] = ''
