@@ -116,7 +116,7 @@ def writeMatrix(prefix, ortho) :
     with open('{0}_content.matrix'.format(prefix), 'w') as fout :
         fout.write('\t'.join(['#']+genomes)+'\n')
         for g in genes :
-            mat = [ ['0', '1'][ g in ortho[genome] ] for genome in genomes ]
+            mat = [ ['0', '1', '-1'][ 0 if g not in ortho[genome] else (1 if ortho[genome][g]>0 else 2) ] for genome in genomes ]
             fout.write('\t'.join([g] + mat)+'\n')
     logger('Gene content matrix is saved in {0}_content.matrix'.format(prefix))
 

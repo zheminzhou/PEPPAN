@@ -1,4 +1,4 @@
-import os, re, sys, shlex, ete3, tempfile, hashlib
+import os, re, sys, shlex, ete3, tempfile, hashlib, shutil
 import subprocess, numpy as np, pandas as pd, numba as nb
 from operator import itemgetter
 import zipfile, io
@@ -517,15 +517,15 @@ def filt_genes(prefix, groups, ortho_groups, global_file, cfl_file, priorities, 
     used, pangenome, panList = {}, {}, {}
     lowest_p = max([v[0] for v in priorities.values()])    
     while len(scores) > 0 :
-        # get top 100 genes
+        # get top 200 genes
         ortho_groups = ortho_groups[np.all(in1d(ortho_groups, list(scores.keys())).reshape(ortho_groups.shape), 1)]
-        genes = get_gene(scores, priorities, ortho_groups, cnt=100)
+        genes = get_gene(scores, priorities, ortho_groups, cnt=50)
         if len(genes) <= 0 :
             continue
         to_run, (min_score, min_rank) = [], genes[-1][1:]
         genes = {gene:score for gene, score, min_rank in genes}
 
-        minSet = len(genes)*0.8
+        minSet = len(genes)*0.5
         tmpSet = {}
         for gene, score in list(genes.items()) :
             present_iden = 0
@@ -536,14 +536,14 @@ def filt_genes(prefix, groups, ortho_groups, global_file, cfl_file, priorities, 
                     v = used.get(m[5], None)
                     if v is None :
                         present_iden = max(present_iden, m[4])
-                    elif v > 0 :
-                        m[3] = -1
+                    else :
+                        m[3] = 0 if v > 0 else -m[3]
                 if present_iden < (params['clust_identity']-0.02)*10000 :
                     genes.pop(gene, None)
                     scores.pop(gene, None)
                     conflicts.pop(gene, None)
                 else :
-                    tmpSet[gene] = mat[mat.T[3] > 0]
+                    tmpSet[gene] = mat[mat.T[3] != 0]
         if len(genes) < minSet :
             continue
 
@@ -557,6 +557,25 @@ def filt_genes(prefix, groups, ortho_groups, global_file, cfl_file, priorities, 
                 for g, i, c in cfl :
                     conflicts[g][i] = c
         
+        used2 = set([])
+        for gene, score in sorted(genes.items(), key=lambda x:-x[1]) :
+            if gene not in new_groups :
+                mat = tmpSet.get(gene)
+                cfl = conflicts.get(int(gene), {})
+                unsure = 0
+                for id, m in enumerate(mat) :
+                    if m[5] in used2 :
+                        unsure += 1
+                if unsure >= mat.shape[0] * 0.8 :
+                    genes.pop(gene)
+                else :
+                    for id, m in enumerate(mat) :
+                        if m[5] not in used2 :
+                            used2.update( { int(k/10) for k in cfl.get(m[5],[]) } )
+                    if np.any(mat.T[3] < 0) :
+                        mat[np.where(mat.T[3]< 0)[0][::3], 3] *= -1
+                        tmpSet[gene] = mat[mat.T[3] > 0]
+        
         if params['orthology'] in ('ml', 'nj') :
             for gene, score in genes.items() :
                 if gene not in new_groups :
@@ -566,7 +585,6 @@ def filt_genes(prefix, groups, ortho_groups, global_file, cfl_file, priorities, 
                     region_score = mat.T[4]/mat[bestPerGenome[matInGenome], 4]
                     if region_score.size >= bestPerGenome.size * 2 :
                         used2, kept = set([]), np.ones(mat.shape[0], dtype=bool)
-                            
                         for id, m in enumerate(mat) :
                             if m[5] in used2 :
                                 kept[id] = False
@@ -668,7 +686,7 @@ def filt_genes(prefix, groups, ortho_groups, global_file, cfl_file, priorities, 
             superR = [None, -999, 0]
             if len(supergroup) :
                 for superC, cnt in sorted(supergroup.items(), key=lambda d:d[1], reverse=True) :
-                    if cnt >= 0.5 * mat.shape[0] or cnt >= 0.5 * len(panList[superC]) :
+                    if cnt >= 0.3 * mat.shape[0] or cnt >= 0.3 * len(panList[superC]) :
                         gl1, gl2 = panList[superC], set(mat.T[1])
                         s = len(gl1 | gl2) - len(gl1) - 3*len(gl1 & gl2)
                         if s < 0 : s = -1
@@ -786,7 +804,7 @@ def iter_map_bsn(data) :
             sc = np.min([sc, sc2+3])
             x = baseConv[np.array(list(ms)).view(asc2int)]
             group[4][tab[6]-1:tab[6]+len(x)-1] = x
-            r = 2./(1./(float(sc)/tab[12]) + 1./tab[10]) if float(sc)/tab[12] > tab[10] else float(sc)/tab[12]
+            r = np.sqrt(float(sc)/tab[12] * tab[10]) #|2./(1./(float(sc)/tab[12]) + 1./tab[10]) if float(sc)/tab[12] > tab[10] else float(sc)/tab[12]
             msc = (sc * tab[2])*np.sqrt(sc*r)
             amsc = float(msc)/(tab[7]-tab[6]+1)
             max_sc.append([tab[6], tab[7], amsc, msc])
@@ -821,7 +839,7 @@ def compare_prediction(blastab, old_prediction) :
     blastab = pd.DataFrame(blastab)
     blastab = blastab.assign(s=np.min([blastab[8], blastab[9]], 0)).sort_values(by=[1, 's']).drop('s', axis=1).values
     
-    blastab.T[10] = 0.2
+    blastab.T[10] = 0.1
     with MapBsn(old_prediction) as op :
         curr = [None, -1, 0]
         for bsn in blastab :
@@ -1041,7 +1059,7 @@ def initializing(bsn_file, global_file) :
                 for gene, data, score in toUpdate :
                     gene_scores[int(gene)] = score
                     conn2.save(gene, data)
-    os.rename(bsn_file + '.tmp.npz', bsn_file + '.tab.npz')
+    shutil.move(bsn_file + '.tmp.npz', bsn_file + '.tab.npz')
     return gene_scores
 
 
@@ -1589,7 +1607,7 @@ PEPPA.py
     parser.add_argument('--clust_match_prop', help='minimum matches in mmseqs clusters. Default: 0.9', default=0.9, type=float)
 
     parser.add_argument('--nucl', dest='noDiamond', help='disable Diamond search. Fast but less sensitive when nucleotide identities < 0.9', default=False, action='store_true')
-    parser.add_argument('--match_identity', help='minimum identities in BLAST search. Default: 0.5', default=0.5, type=float)
+    parser.add_argument('--match_identity', help='minimum identities in BLAST search. Default: 0.6', default=0.6, type=float)
     parser.add_argument('--match_prop', help='minimum match proportion for normal genes in BLAST search. Default: 0.6', default=0.6, type=float)
     parser.add_argument('--match_len', help='minimum match length for normal genes in BLAST search. Default: 250', default=250., type=float)
     parser.add_argument('--match_prop1', help='minimum match proportion for short genes in BLAST search. Default: 0.8', default=0.8, type=float)
@@ -1769,19 +1787,21 @@ def ortho(args) :
         #if params.get('map_bsn', None) is None :
         params['map_bsn']= params['prefix']+'.map_bsn'
         if not params['continue'] or not os.path.isfile(params['map_bsn']+'.tab.npz') :            
-            with MapBsn(params['map_bsn']+'.tab.npz', 'w') as tab_conn, MapBsn(params['map_bsn']+'.seq.npz', 'w') as seq_conn, MapBsn(params['map_bsn']+'.mat.npz', 'w') as mat_conn, MapBsn(params['map_bsn']+'.conflicts.npz', 'w') as clf_conn :
+            with MapBsn(params['map_bsn']+'.tab.working.npz', 'w') as tab_conn, MapBsn(params['map_bsn']+'.seq.npz', 'w') as seq_conn, MapBsn(params['map_bsn']+'.mat.npz', 'w') as mat_conn, MapBsn(params['map_bsn']+'.conflicts.npz', 'w') as clf_conn :
                 get_map_bsn(params['prefix'], params['clust'], genomes, params['self_bsn'], params['old_prediction'], tab_conn, seq_conn, mat_conn, clf_conn, params.get('orthology', 'sbh') != 'sbh')
+            shutil.move(params['map_bsn']+'.tab.working.npz', params['map_bsn']+'.tab.npz')
         pool.close()
         pool.join()
         
         global mat_out
         mat_out = Manager().list([])
-        writeProcess = Process(target=async_writeOut, args=(mat_out, params['map_bsn']+'.mat.npz', params['prediction'], labelFile))
+        writeProcess = Process(target=async_writeOut, args=(mat_out, params['map_bsn']+'.mat.npz', params['prediction']+'.working', labelFile))
         writeProcess.start()
         gene_scores = initializing(params['map_bsn'], params.get('global', None))
         with MapBsn(params['map_bsn']+'.tab.npz') as tab_conn :
             filt_genes(params['prefix'], tab_conn, np.load(params['self_bsn'], allow_pickle=True), params['global'], params['map_bsn']+'.conflicts.npz', priorities, gene_scores, encodes)
         writeProcess.join()
+        shutil.move(params['prediction']+'.working', params['prediction'])
     else :
         params['clust'] = params['prefix'] + '.clust.exemplar'
         if os.path.isfile(params['clust']) :
