@@ -358,7 +358,8 @@ def filt_per_group(data) :
             
             if aln >= params['match_frag_len'] :
                 gd = (np.max([params['self_id'], 2.0/aln]), 0.) if m1[1] == m2[1] else global_differences.get(tuple(sorted([m1[1], m2[1]])), (0.5, 0.6))
-                distances[i1, i2, :] = [(mut/aln/(gd[0]*np.exp(gd[1]*params['allowed_sigma'])))/gd[0], 1/gd[0]]
+                d = mut/aln/(gd[0]*np.exp(gd[1]*params['allowed_sigma']))
+                distances[i1, i2, :] = [d/gd[0], 1/gd[0]]
             else :
                 gd = (np.max([params['self_id'], 2.0/params['match_frag_len']]), 0.) if m1[1] == m2[1] else global_differences.get(tuple(sorted([m1[1], m2[1]])), (0.5, 0.6))
                 distances[i1, i2, :] = [2./gd[0], 1/gd[0]]
@@ -436,10 +437,10 @@ def filt_per_group(data) :
                     if len(node.leaves) : 
                         oleaves = all_tips - node.leaves
                         ic = np.sum(incompatible[list(node.leaves)].T[:, list(oleaves)], (1,2))
-                        node.ic = ic[0]/ic[1] if ic[1] > 0 else 0.
+                        node.ic = [ic[0], max(1., ic[1])]
                     else :
-                        node.ic = 0.
-                cut_node = [[np.sqrt(n.leaf_size*(all_tip_size-n.leaf_size))*n.ic, n.ic, n.dist, n] for n in gene_phy.iter_descendants('postorder') if n.ic > 1]
+                        node.ic = [0., 1.]
+                cut_node = [[n.ic[1]/np.sqrt(n.ic[1]), n.ic[0]/n.ic[1], n.dist, n] for n in gene_phy.iter_descendants('postorder') if n.ic[0] > n.ic[1]]
                 if len(cut_node) > 0 :
                     cut_node = max(cut_node, key=lambda x:(x[0], x[1], x[2]))[3]
                     prev_node = cut_node.up
@@ -562,11 +563,11 @@ def filt_genes(prefix, groups, ortho_groups, global_file, cfl_file, priorities, 
             if gene not in new_groups :
                 mat = tmpSet.get(gene)
                 cfl = conflicts.get(int(gene), {})
-                unsure = 0
-                for id, m in enumerate(mat) :
-                    if m[5] in used2 :
-                        unsure += 1
-                if unsure >= mat.shape[0] * 0.8 :
+                unsure = np.sum([ 1 for m in mat if m[3] > 0 and m[5] in used2 ])
+                #for id, m in enumerate(mat) :
+                    #if m[3] > 0 and m[5] in used2 :
+                        #unsure += 1
+                if unsure >= np.sum(mat.T[3]>0) * 0.8 :
                     genes.pop(gene)
                 else :
                     for id, m in enumerate(mat) :
@@ -1648,7 +1649,7 @@ PEPPA.py
         params.orthology = 'sbh'
     params.incompleteCDS = params.incompleteCDS.lower()
     if params.noNeighborCheck :
-        params.self_id = 0.001
+        params.self_id = 0.002
     else :
         params.self_id = 0.005
     return params
