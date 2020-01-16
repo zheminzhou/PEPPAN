@@ -1654,17 +1654,16 @@ PEPPA.py
         params.self_id = 0.005
     return params
 
-def encodeNames(genomes, genes, geneFiles, prefix, labelFile=None) :
+def encodeNames(genomes, genes, geneFiles, labelFile, reuse=False) :
     taxon = {g[0] for g in genomes.values()}
-    if labelFile and os.path.exists(labelFile) :
+    if reuse and os.path.exists(labelFile) :
         labels = dict(pd.read_csv(labelFile, header=None, na_filter=False).values.tolist())
     else :
         labels = {label:labelId for labelId, label in enumerate( sorted(set(list(taxon) + list(genomes.keys()) + list(genes.keys()) + geneFiles.split(',')) ) )}
-        pd.DataFrame(sorted(labels.items(), key=lambda v:v[1])).to_csv(prefix + '.encode.csv', header=False, index=False)
-        labelFile = prefix + '.encode.csv'
+        pd.DataFrame(sorted(labels.items(), key=lambda v:v[1])).to_csv(labelFile, header=False, index=False)
     genes = { labels[gene]:[labels.get(info[0], -1), labels.get(info[1], -1)] + info[2:] for gene, info in genes.items() }
     genomes = { labels[genome]:[labels[info[0]]] + info[1:] for genome, info in genomes.items() }
-    return genomes, genes, labels, labelFile
+    return genomes, genes, labels
 
 def iterClust(prefix, genes, geneGroup, params) :
     identity_target = params['identity']
@@ -1736,13 +1735,13 @@ def ortho(args) :
     genes = addGenes(genes, params['genes'], params['gtable'])
     
     params['encode'] = params['prefix']+'.encode.csv'
-    genomes, genes, encodes, labelFile = encodeNames(genomes, genes, params['genes'], params['prefix'], params.get('encode', None))
+    genomes, genes, encodes = encodeNames(genomes, genes, params['genes'], params.get('encode', None), params['continue'])
     priorities = load_priority(params.get('priority', ''), genes, encodes)
     geneInGenomes = { g:i[0] for g, i in genes.items() }
     
-    #if params.get('old_prediction', None) is None :
     params['old_prediction'] = params['prefix']+'.old_prediction.npz'
     if not params['continue'] or not os.path.isfile(params['old_prediction']) :
+        params['continue'] = False
         old_predictions = {}
         for n, g in genes.items() :
             if '' not in encodes or g[1] != encodes[''] :
@@ -1758,36 +1757,35 @@ def ortho(args) :
         old_predictions.clear()
         del old_predictions, n, g
     
-    #if params.get('prediction', None) is None :
     params['prediction'] = params['prefix'] + '.Prediction'
     if not params['continue'] or not os.path.isfile(params['prediction']) :
 
-        #if params.get('clust', None) is None :
         params['clust'] = params['prefix'] + '.clust.exemplar'
         if not params['continue'] or not os.path.isfile(params['clust']) :
+            params['continue'] = False
             params['genes'], groups = writeGenes('{0}.genes'.format(params['prefix']), genes, priorities)
             genes.clear()
             del genes
             logger('Run MMSeqs linclust to get exemplar sequences. Params: {0} identities and {1} align ratio'.format(params['clust_identity'], params['clust_match_prop']))
             params['clust'] = iterClust(params['prefix'], params['genes'], groups, dict(identity=params['clust_identity'], coverage=params['clust_match_prop'], n_thread=params['n_thread'], translate=False))
         
-        #if params.get('self_bsn', None) is None :
         params['self_bsn'] = params['prefix']+'.self_bsn.npy'
         if not params['continue'] or not os.path.isfile(params['self_bsn']) :
+            params['continue'] = False
             np.save(params['self_bsn'], get_similar_pairs(params['prefix'], params['clust'], priorities, params))
         genes = { int(n):s for n, s in readFasta(params['clust']).items()}
         logger('Obtained {0} exemplar gene sequences from {1}'.format(len(genes), params['clust']))
 
-        #if params.get('global', None) is None :
         params['global'] = params['prefix']+'.global.npy'
         if not params['continue'] or not os.path.isfile(params['global']) :
+            params['continue'] = False
             np.save(params['global'], \
                     get_global_difference(get_gene_group(params['clust'], params['self_bsn']), \
                                           params['clust'], params['self_bsn'], geneInGenomes, nGene=1000) )
             
-        #if params.get('map_bsn', None) is None :
         params['map_bsn']= params['prefix']+'.map_bsn'
         if not params['continue'] or not os.path.isfile(params['map_bsn']+'.tab.npz') :            
+            params['continue'] = False
             with MapBsn(params['map_bsn']+'.tab.working.npz', 'w') as tab_conn, MapBsn(params['map_bsn']+'.seq.npz', 'w') as seq_conn, MapBsn(params['map_bsn']+'.mat.npz', 'w') as mat_conn, MapBsn(params['map_bsn']+'.conflicts.npz', 'w') as clf_conn :
                 get_map_bsn(params['prefix'], params['clust'], genomes, params['self_bsn'], params['old_prediction'], tab_conn, seq_conn, mat_conn, clf_conn, params.get('orthology', 'sbh') != 'sbh')
             shutil.move(params['map_bsn']+'.tab.working.npz', params['map_bsn']+'.tab.npz')
@@ -1796,7 +1794,7 @@ def ortho(args) :
         
         global mat_out
         mat_out = Manager().list([])
-        writeProcess = Process(target=async_writeOut, args=(mat_out, params['map_bsn']+'.mat.npz', params['prediction']+'.working', labelFile))
+        writeProcess = Process(target=async_writeOut, args=(mat_out, params['map_bsn']+'.mat.npz', params['prediction']+'.working', params['encode']))
         writeProcess.start()
         gene_scores = initializing(params['map_bsn'], params.get('global', None))
         with MapBsn(params['map_bsn']+'.tab.npz') as tab_conn :
