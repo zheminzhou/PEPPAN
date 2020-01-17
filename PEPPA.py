@@ -687,10 +687,11 @@ def filt_genes(prefix, groups, ortho_groups, global_file, cfl_file, priorities, 
             superR = [None, -999, 0]
             if len(supergroup) :
                 for superC, cnt in sorted(supergroup.items(), key=lambda d:d[1], reverse=True) :
-                    if cnt >= 0.3 * mat.shape[0] or cnt >= 0.3 * len(panList[superC]) :
+                    if cnt >= mat.shape[0] or cnt >= len(panList[superC]) :
                         gl1, gl2 = panList[superC], set(mat.T[1])
-                        s = len(gl1 | gl2) - len(gl1) - 3*len(gl1 & gl2)
-                        if s < 0 : s = -1
+                        s = len( (gl1 | gl2) ^ gl1 ) - 2*len(gl1 & gl2)
+                        if s < 0 : 
+                            s = -1
                         if [s, cnt] > superR[1:] :
                             superR = [superC, s, cnt]
             if superR[1] > 0 or superR[2] > 0 :
