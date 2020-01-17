@@ -520,7 +520,7 @@ def filt_genes(prefix, groups, ortho_groups, global_file, cfl_file, priorities, 
     while len(scores) > 0 :
         # get top 200 genes
         ortho_groups = ortho_groups[np.all(in1d(ortho_groups, list(scores.keys())).reshape(ortho_groups.shape), 1)]
-        genes = get_gene(scores, priorities, ortho_groups, cnt=50)
+        genes = get_gene(scores, priorities, ortho_groups, cnt=200)
         if len(genes) <= 0 :
             continue
         to_run, (min_score, min_rank) = [], genes[-1][1:]
