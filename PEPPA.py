@@ -150,7 +150,11 @@ def iter_readGFF(data) :
                         if part[2] == 'CDS' :
                             assert len(name) > 0, logger('Error: CDS has no name. {0}'.format(line))
                             #          source_file, seqName, Start,       End,      Direction, hash, Sequences
-                            cds[name[0]] = [fname, part[0], int(part[3]), int(part[4]), part[6], 0, '']
+                            if name[0] not in cds :
+                                cds[name[0]] = [fname, part[0], int(part[3]), int(part[4]), part[6], 0, [], int(part[3]), int(part[4])]
+                            elif part[0] == cds[name[0]][1] and fname == cds[name[0]][0] :
+                                cds[name[0]].extend([int(part[3]), int(part[4])])
+                                cds[name[0]][3] = max(cds[name[0]][3], int(part[4]))
                         else :
                             ids = re.findall(r'ID=([^;]+)', part[8])
                             if len(ids) :
@@ -161,9 +165,16 @@ def iter_readGFF(data) :
     for n in cds :
         c = cds[n]
         try:
-            c[6]= seq[c[1]][1][(c[2]-1) : c[3]]
+            for i in np.arange(7, len(c), 2) :
+                s = seq[c[1]][1][(c[i]-1) : c[i+1]]
+                c[6].append(s)
             if c[4] == '-' :
-                c[6] = rc(c[6])
+                c[6] = ''.join([ rc(s) for s in reverse(c[6]) ])
+            else :
+                c[6] = ''.join(c[6])
+#            c[6]= seq[c[1]][1][(c[2]-1) : c[3]]
+#            if c[4] == '-' :
+#                c[6] = rc(c[6])
             pcode = checkPseu(n, c[6], gtable)
             if pcode :
                 c[5], c[6] = pcode, ''
@@ -171,6 +182,7 @@ def iter_readGFF(data) :
                 c[5] = int(hashlib.sha1(c[6].encode('utf-8')).hexdigest(), 16)
         except :
             c[5], c[6] = 6, ''
+        cds[n][:] = c[:7]
 
     return seq, cds    
 
@@ -1603,13 +1615,14 @@ PEPPA.py
 
     parser.add_argument('--min_cds', help='[Default: 150] Minimum length for a gene to be used in similarity searches.', default=150., type=float)
     parser.add_argument('--incompleteCDS', help="[Default: ''] Allowed types of imperfection for reference genes. \n's': allows unrecognized start codon. \n'e': allows unrecognized stop codon. \n'i': allows stop codons in the coding region. \n'f': allows frameshift in the coding region. \nMultiple keywords can be used together. e.g., use 'sife' to allow random sequences.", default='')
+    parser.add_argument('--intron', help="Enable this to allow multiple CDSs being concatenated if they are under the same name.", default=False, action='store_true')
     parser.add_argument('--gtable', help='[Default: 11] Translate table to Use. Only support 11 and 4 (for Mycoplasma)', default=11, type=int)
 
     parser.add_argument('--clust_identity', help='minimum identities of mmseqs clusters. Default: 0.9', default=0.9, type=float)
     parser.add_argument('--clust_match_prop', help='minimum matches in mmseqs clusters. Default: 0.9', default=0.9, type=float)
 
     parser.add_argument('--nucl', dest='noDiamond', help='disable Diamond search. Fast but less sensitive when nucleotide identities < 0.9', default=False, action='store_true')
-    parser.add_argument('--match_identity', help='minimum identities in BLAST search. Default: 0.6', default=0.6, type=float)
+    parser.add_argument('--match_identity', help='minimum identities in BLAST search. Default: 0.65', default=0.65, type=float)
     parser.add_argument('--match_prop', help='minimum match proportion for normal genes in BLAST search. Default: 0.6', default=0.6, type=float)
     parser.add_argument('--match_len', help='minimum match length for normal genes in BLAST search. Default: 250', default=250., type=float)
     parser.add_argument('--match_prop1', help='minimum match proportion for short genes in BLAST search. Default: 0.8', default=0.8, type=float)
@@ -1627,13 +1640,6 @@ PEPPA.py
     parser.add_argument('--untrusted', help='FORMAT: l,p; A gene is not reported if it is shorter than l and present in less than p of prior annotations. Default: 300,0.3', default='300,0.3')
     parser.add_argument('--metagenome', help='Set to metagenome mode. equals to \n"--nucl --incompleteCDS sife --clust_identity 0.99 --clust_match_prop 0.8 --match_identity 0.98 --orthology sbh"', default=False, action='store_true')
     parser.add_argument('--continue', help='continue from a previously stopped run.', default=False, action='store_true')
-    #parser.add_argument('--old_prediction', help='development param', default=None)
-    #parser.add_argument('--encode', help='development param', default=None)
-    #parser.add_argument('--clust', help='development param', default=None)
-    #parser.add_argument('--map_bsn', help='development param', default=None)
-    #parser.add_argument('--self_bsn', help='development param', default=None)
-    #parser.add_argument('--global', help='development param', default=None)
-    #parser.add_argument('--prediction', help='development param', default=None)
 
     params = parser.parse_args(a)
     params.match_frag_len = min(params.min_cds, params.match_frag_len)

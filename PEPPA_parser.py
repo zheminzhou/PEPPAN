@@ -1,4 +1,5 @@
 import sys, os, re, numpy as np, subprocess
+from ete3 import Tree
 from collections import defaultdict
 from scipy.optimize import curve_fit
 try:
@@ -162,7 +163,12 @@ def writeTree(prefix, ortho) :
     with open('{0}_content.fas'.format(prefix), 'w') as fout :
         for genome, content in ortho.items() :
             fout.write('>{0}\n{1}\n'.format(genome, ''.join([['A','T'][int(g in content)] for g in genes ])))
-    subprocess.Popen('{fasttree} -quiet -nt {0}_content.fas > {0}_content.nwk'.format(prefix, **externals), shell=True).wait()
+    tree = subprocess.Popen('{fasttree} -quiet -nt {0}_content.fas'.format(prefix, **externals).split(), stdout=subprocess.PIPE, universal_newlines=True).communicate()[0]
+
+    tree = Tree(tree, format=1)
+    for n in tree.traverse() :
+        n.dist *= len(genes)
+    tree.write(outfile='{0}_content.nwk'.format(prefix), format=1)
     logger('Gene content tree is saved in {0}_content.nwk'.format(prefix))
 
 def PEPPA_parser(args) :

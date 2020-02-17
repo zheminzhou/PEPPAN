@@ -242,8 +242,9 @@ def poolBlast(params) :
         blastab = None
     if blastab is None :
         return None
-    blastab.to_msgpack(qry + '.match.msg')
-    return qry + '.match.msg'
+    blastab.columns = blastab.columns.astype(str)
+    blastab.to_pickle( qry + '.match.pkl' )
+    return qry + '.match.pkl'
 
 
 
@@ -290,6 +291,11 @@ class RunBlast(object) :
             if blastab :
                 blastab = pd.concat(blastab, ignore_index=True)
                 blastab = np.hstack([blastab.values, np.arange(blastab.shape[0], dtype=int)[:, np.newaxis]])
+            else :
+                if return_overlap[0] :
+                    return np.array([]), np.array([])
+                else :
+                    return np.array([])
         if useProcess != self.pool :
             self.pool.close()
         
@@ -435,10 +441,13 @@ class RunBlast(object) :
         res = self.pool.map(poolBlast, [ [blastn, refDb, q, self.min_id, self.min_cov, self.min_ratio] for q in qrys ])
         #res = list(map(poolBlast, [ [blastn, refDb, q, self.min_id, self.min_cov, self.min_ratio] for q in qrys ]))
         res = [r for r in res if r is not None]
-        blastab = pd.DataFrame(np.vstack([ pd.read_msgpack(r).values for r in res]))
-        blastab[14] = [ [ list(t) for t in tab ] for tab in blastab[14].tolist()]
-        for r in res :
-            os.unlink(r)
+        if len(res) :
+            blastab = pd.DataFrame(np.vstack([ pd.read_pickle(r).values for r in res]))
+            blastab[14] = [ [ list(t) for t in tab ] for tab in blastab[14].tolist()]
+            for r in res :
+                os.unlink(r)
+        else :
+            blastab = pd.DataFrame([])
         logger('Run BLASTn finishes. Got {0} alignments'.format(blastab.shape[0]))
         return blastab
 
@@ -487,7 +496,8 @@ class RunBlast(object) :
                 score = int(part[14][5:]) if part[14].startswith('ZR:') else int(re.findall('ZR:i:(\d+)', line)[0])
                 blastab.append([qn, rn, iden, cl, int(variation-sum(cd)), len(cd), qs, qe, rs, r_e, 0.0, score, ql, rl, cigar ])
             blastab = pd.DataFrame(blastab)
-            blastab[[0,1]] = blastab[[0,1]].astype(str)
+            if blastab.size > 0 :
+                blastab[[0,1]] = blastab[[0,1]].astype(str)
             return blastab
         
         refAA = os.path.join(self.dirPath, 'refAA')
