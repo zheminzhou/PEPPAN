@@ -169,7 +169,7 @@ def iter_readGFF(data) :
                 s = seq[c[1]][1][(c[i]-1) : c[i+1]]
                 c[6].append(s)
             if c[4] == '-' :
-                c[6] = ''.join([ rc(s) for s in reverse(c[6]) ])
+                c[6] = ''.join([ rc(s) for s in reversed(c[6]) ])
             else :
                 c[6] = ''.join(c[6])
 #            c[6]= seq[c[1]][1][(c[2]-1) : c[3]]
