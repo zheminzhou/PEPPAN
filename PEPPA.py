@@ -1159,7 +1159,7 @@ def synteny_resolver(prefix, prediction, nNeighbor = 2) :
     for grp_tag, groups in outs :
         if groups is not None :
             for id, (t, i) in enumerate(sorted(groups.items())) :
-                orthologs[i, 0] = orthologs[i[0], 0] + '#{0}'.format(id)
+                orthologs[i, 0] = orthologs[i[0], 0] + '/{0}'.format(id)
 
     prediction.T[0] = orthologs[prediction.T[2].astype(int), 0]
     prediction = pd.DataFrame(prediction).sort_values(by=[0, 2, 7])
@@ -1350,7 +1350,7 @@ def write_output(prefix, prediction, genomes, clust_ref, encodes, old_prediction
     except :
         prediction = pd.DataFrame(prediction).sort_values(by=[5,9]).values
     # if the secondary repr gene is the same as the primary gene, remove it
-    prediction[np.array([p.rsplit('/', 1)[0].rsplit('#', 1)[0] for p in prediction.T[4]]) == np.array([p.rsplit('/', 1)[0].rsplit('#', 1)[0] for p in prediction.T[0]]), 4] = ''
+    prediction[np.array([p.rsplit('/', 2)[0] for p in prediction.T[4]]) == np.array([p.rsplit('/', 2)[0] for p in prediction.T[0]]), 4] = ''
 
     # add representative genes as allele 1
     alleles = {}
@@ -1424,7 +1424,7 @@ def write_output(prefix, prediction, genomes, clust_ref, encodes, old_prediction
                         alleles[pred[0]][seq2] = 't{0}'.format(len(alleles[pred[0]])+1)
                 pred[13] = map_tag.format(alleles[pred[0]][seq2])
                 
-                p = pred[0].rsplit('/', 1)[0].rsplit('#', 1)[0]
+                p = pred[0].rsplit('/', 2)[0]
                 if encodes[p] in clust_ref and len(seq2) < pseudogene*len(clust_ref[encodes[p]]) :
                     cds = 'structral_variation:{0:.2f}%'.format(100.*len(seq2)/len(clust_ref[encodes[p]]))
                 else :
