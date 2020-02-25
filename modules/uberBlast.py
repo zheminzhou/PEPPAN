@@ -295,9 +295,9 @@ class RunBlast(object) :
                 blastab = np.hstack([blastab, np.arange(blastab.shape[0], dtype=int)[:, np.newaxis]])
             else :
                 if return_overlap[0] :
-                    return np.array([]), np.array([])
+                    return np.empty([0, 16], dtype=object), np.empty([0, 3], dtype=int)
                 else :
-                    return np.array([])
+                    return np.empty([0, 16], dtype=object)
         if useProcess != self.pool :
             self.pool.close()
         
@@ -448,7 +448,7 @@ class RunBlast(object) :
             for r in res :
                 os.unlink(r)
         else :
-            blastab = np.array([])
+            blastab = np.empty([0, 15], dtype=object)
         logger('Run BLASTn finishes. Got {0} alignments'.format(blastab.shape[0]))
         return blastab
 

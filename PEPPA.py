@@ -238,10 +238,10 @@ def get_similar_pairs(prefix, clust, priorities, params) :
                     s_j += s
     if params['noDiamond'] :
         self_bsn = uberBlast('-r {0} -q {0} --blastn --min_id {1} --min_cov {2} -t {3} --min_ratio {4} -e 3,3 -p --gtable {5}'.format(\
-            clust, params['match_identity'] - 0.1, params['match_frag_len']-10, params['n_thread'], params['match_frag_prop']-0.1, params['gtable']).split(), pool)
+            clust, params['match_identity'] - 0.1, params['match_frag_len']-5, params['n_thread'], params['match_frag_prop']-0.05, params['gtable']).split(), pool)
     else :
         self_bsn = uberBlast('-r {0} -q {0} --blastn --diamondSELF -s 1 --min_id {1} --min_cov {2} -t {3} --min_ratio {4} -e 3,3 -p --gtable {5}'.format(\
-            clust, params['match_identity'] - 0.1, params['match_frag_len']-10, params['n_thread'], params['match_frag_prop']-0.1, params['gtable']).split(), pool)
+            clust, params['match_identity'] - 0.1, params['match_frag_len']-5, params['n_thread'], params['match_frag_prop']-0.05, params['gtable']).split(), pool)
     self_bsn.T[:2] = self_bsn.T[:2].astype(int)
     presence, ortho_pairs = {}, {}
     save = []
