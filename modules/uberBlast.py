@@ -243,8 +243,9 @@ def poolBlast(params) :
     if blastab is None :
         return None
     blastab.columns = blastab.columns.astype(str)
-    blastab.to_pickle( qry + '.match.pkl' )
-    return qry + '.match.pkl'
+    #blastab.to_pickle( qry + '.match.pkl' )
+    np.save(qry+'.match.npy', blastab.values, allow_pickle=True)
+    return qry + '.match.npy'
 
 
 
@@ -442,7 +443,7 @@ class RunBlast(object) :
         #res = list(map(poolBlast, [ [blastn, refDb, q, self.min_id, self.min_cov, self.min_ratio] for q in qrys ]))
         res = [r for r in res if r is not None]
         if len(res) :
-            blastab = pd.DataFrame(np.vstack([ pd.read_pickle(r).values for r in res]))
+            blastab = pd.DataFrame(np.vstack([ np.load(r, allow_pickle=True) for r in res]))
             blastab[14] = [ [ list(t) for t in tab ] for tab in blastab[14].tolist()]
             for r in res :
                 os.unlink(r)
