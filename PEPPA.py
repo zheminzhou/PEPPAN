@@ -1090,10 +1090,10 @@ def ite_synteny_resolver(data) :
         for n in np.arange(m+1, ids.size) :
             j = ids[n]
             ni, nj = np.array(list(neighbors[i]), dtype=int), np.array(list(neighbors[j]), dtype=int)
-            oi, oj = np.unique(orthologs[ni, 0]), np.unique(orthologs[nj, 0])
-            ois, ojs = np.min([6, oi.size]), np.min([6, oj.size])
-            s = 3*(oi.size + oj.size - np.unique(np.concatenate([oi, oj])).size) + np.max([6-ois, 6-ojs, 0]) + 1
-            d = 3*nNeighbor - s
+            oi, oj = set(orthologs[ni, 0]), set(orthologs[nj, 0])
+            ois, ojs = np.min([6, len(oi)]), np.min([6, len(oj)])
+            s = 3 * len(oi & oj) + np.max([6-ois, 6-ojs, 0]) + 1
+            d = 3 * nNeighbor - s
             distances.append([d, co_genomes[m] != co_genomes[n], i, j])
             if co_genomes[m] == co_genomes[n] and d > 0 :
                 conflicts[(i, j)] = conflicts[(j, i)] = 1
