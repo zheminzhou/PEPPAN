@@ -242,8 +242,8 @@ def poolBlast(params) :
         blastab = None
     if blastab is None :
         return None
-    blastab.columns = blastab.columns.astype(str)
-    #blastab.to_pickle( qry + '.match.pkl' )
+
+    blastab[14] = [[list(t) for t in tab] for tab in blastab[14].tolist()]
     np.save(qry+'.match.npy', blastab.values, allow_pickle=True)
     return qry + '.match.npy'
 
@@ -284,14 +284,15 @@ class RunBlast(object) :
             for method in methods :
                 if method.lower() in tools :
                     blastab.append(tools[method.lower()](ref, qry))
+            blastab = [b for b in blastab if b.shape[0] > 0]
         except :
             import traceback
             print(traceback.print_exc())
         finally :
             shutil.rmtree(self.dirPath)
             if blastab :
-                blastab = pd.concat(blastab, ignore_index=True)
-                blastab = np.hstack([blastab.values, np.arange(blastab.shape[0], dtype=int)[:, np.newaxis]])
+                blastab = np.vstack(blastab)
+                blastab = np.hstack([blastab, np.arange(blastab.shape[0], dtype=int)[:, np.newaxis]])
             else :
                 if return_overlap[0] :
                     return np.array([]), np.array([])
@@ -443,12 +444,11 @@ class RunBlast(object) :
         #res = list(map(poolBlast, [ [blastn, refDb, q, self.min_id, self.min_cov, self.min_ratio] for q in qrys ]))
         res = [r for r in res if r is not None]
         if len(res) :
-            blastab = pd.DataFrame(np.vstack([ np.load(r, allow_pickle=True) for r in res]))
-            blastab[14] = [ [ list(t) for t in tab ] for tab in blastab[14].tolist()]
+            blastab = np.vstack([ np.load(r, allow_pickle=True) for r in res])
             for r in res :
                 os.unlink(r)
         else :
-            blastab = pd.DataFrame([])
+            blastab = np.array([])
         logger('Run BLASTn finishes. Got {0} alignments'.format(blastab.shape[0]))
         return blastab
 
@@ -548,7 +548,7 @@ class RunBlast(object) :
                 blastab.append(tab)
         blastab = pd.concat(blastab)
         logger('Run diamond finishes. Got {0} alignments'.format(blastab.shape[0]))
-        return blastab
+        return blastab.values
 
 
 
