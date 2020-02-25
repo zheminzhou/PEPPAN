@@ -440,13 +440,13 @@ class RunBlast(object) :
             with open(q, 'w') as fout :
                 for n, s in qrySeq[id::self.n_thread] :
                     fout.write('>{0}\n{1}\n'.format(n, s))
-        res = self.pool.map(poolBlast, [ [blastn, refDb, q, self.min_id, self.min_cov, self.min_ratio] for q in qrys ])
-        #res = list(map(poolBlast, [ [blastn, refDb, q, self.min_id, self.min_cov, self.min_ratio] for q in qrys ]))
-        res = [r for r in res if r is not None]
-        if len(res) :
-            blastab = np.vstack([ np.load(r, allow_pickle=True) for r in res])
-            for r in res :
+        blastab = []
+        for r in self.pool.imap_unordered(poolBlast, [ [blastn, refDb, q, self.min_id, self.min_cov, self.min_ratio] for q in qrys ]) :
+            if r is not None :
+                blastab.append(np.load(r, allow_pickle=True))
                 os.unlink(r)
+        if len(blastab) :
+            blastab = np.vstack(blastab)
         else :
             blastab = np.empty([0, 15], dtype=object)
         logger('Run BLASTn finishes. Got {0} alignments'.format(blastab.shape[0]))
