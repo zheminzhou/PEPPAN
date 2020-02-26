@@ -846,7 +846,7 @@ def iter_map_bsn(data) :
     else :
         overlap = np.zeros([0, 3], dtype=np.int64)
     
-    np.savez_compressed(out_prefix+'.bsn.npz', bsn=bsn, ovl=ovl[np.argsort(ovl.T[0])])
+    np.savez_compressed(out_prefix+'.bsn.npz', bsn=bsn, ovl=overlap)
     return out_prefix
 
 def compare_prediction(blastab, old_prediction) :
