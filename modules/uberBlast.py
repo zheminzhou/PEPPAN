@@ -231,7 +231,7 @@ def poolBlast(params) :
     
     blastn, refDb, qry, min_id, min_cov, min_ratio = params
     outfile = '{0}.bsn'.format(qry)
-    blast_cmd = '{blastn} -db {refDb} -query {qry} -out {qry}.bsn -perc_identity {min_id} -outfmt "6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue score qlen slen qseq sseq" -qcov_hsp_perc {min_ratio} -num_alignments 1000 -task blastn -evalue 1e-2 -dbsize 5000000 -reward 2 -penalty -3 -gapopen 6 -gapextend 2'.format(
+    blast_cmd = '{blastn} -db {refDb} -query {qry} -word_size 17 -out {qry}.bsn -perc_identity {min_id} -outfmt "6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue score qlen slen qseq sseq" -qcov_hsp_perc {min_ratio} -num_alignments 1000 -task blastn -evalue 1e-2 -dbsize 5000000 -reward 2 -penalty -3 -gapopen 6 -gapextend 2'.format(
         blastn=blastn, refDb=refDb, qry=qry, min_id=min_id*100, min_ratio=min_ratio*100)
     Popen(blast_cmd, stdout=PIPE, shell=True, universal_newlines=True).communicate()
     if os.path.getsize(outfile) > 0 :

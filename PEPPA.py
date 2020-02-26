@@ -846,7 +846,7 @@ def iter_map_bsn(data) :
     else :
         overlap = np.zeros([0, 3], dtype=np.int64)
     
-    np.savez_compressed(out_prefix+'.bsn.npz', bsn=bsn, ovl=overlap)
+    np.savez_compressed(out_prefix+'.bsn.npz', bsn=bsn, ovl=ovl[np.argsort(ovl.T[0])])
     return out_prefix
 
 def compare_prediction(blastab, old_prediction) :
@@ -952,7 +952,7 @@ def get_map_bsn(prefix, clust, genomes, orthoGroup, old_prediction, conn, seq_co
 
         os.unlink(bsnPrefix + '.bsn.npz')
         logger('Merged {0}'.format(bsnPrefix))
-        if bId % 300 == 299 or bId == len(taxa) - 1 :
+        if bId % 500 == 499 or bId == len(taxa) - 1 :
             blastab = np.vstack(blastab)
             blastab = blastab[np.argsort(blastab.T[0], kind='mergesort')]
             blastab = np.split(blastab, np.cumsum(np.unique(blastab.T[0], return_counts=True)[1])[:-1])
