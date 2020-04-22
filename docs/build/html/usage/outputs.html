@@ -1,0 +1,150 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Outputs &#8212; PEPPA 1.0 documentation</title>
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="prev" title="inputs" href="inputs.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="outputs">
+<h1>Outputs<a class="headerlink" href="#outputs" title="Permalink to this headline">¶</a></h1>
+<p>## Outputs for PEPPA.py
+There are two final outputs for PEPPA.py:</p>
+<ol class="arabic">
+<li><p>&amp;lt;prefix&amp;gt;.PEPPA.gff</p>
+<p>This file includes all pan-genes predicted by PEPPA in GFF3 format. Intact CDSs are assigned as “CDS”, disrupted genes (potential pseudogenes) are assigned as “pseudogene” and suspicious annotations that are removed are described as “misc_feature” entries.</p>
+</li>
+</ol>
+<ul class="simple">
+<li><p>If any of the predicted CDSs and psueogenes overlaps with old gene predictions in the original GFF files, the old gene is described in an attribute named “old_locus_tag” of the entry.</p></li>
+<li><p>Each gene and pseudogene is assigned into one of the orthologous groups. This orthologous group is described in “inference” field in a format of:</p></li>
+</ul>
+<div class="section" id="inference-ortholog-group-source-genome-exemplar-gene-allele-id-start-end-coordinates-of-alignment-in-the-exemplar-gene-start-end-coordinates-of-alignmenet-in-the-genome">
+<h2>inference=ortholog_group:&lt;source_genome&gt;:&lt;exemplar_gene&gt;:&lt;allele_ID&gt;:&lt;start &amp; end coordinates of alignment in the exemplar gene&gt;:&lt;start &amp; end coordinates of alignmenet in the genome&gt;<a class="headerlink" href="#inference-ortholog-group-source-genome-exemplar-gene-allele-id-start-end-coordinates-of-alignment-in-the-exemplar-gene-start-end-coordinates-of-alignmenet-in-the-genome" title="Permalink to this headline">¶</a></h2>
+<ol class="arabic" start="2">
+<li><p>&amp;lt;prefix&amp;gt;.alleles.fna</p>
+<p>This file contains all the unique alleles of all pan genes predicted by PEPPA.</p>
+</li>
+</ol>
+<p>## Outputs for PEPPA_parse.py
+PEPPA_parse.py generates:</p>
+<ol class="arabic simple">
+<li><p>&amp;lt;prefix&amp;gt;.gene_content.matrix or &amp;lt;prefix&amp;gt;.CDS_content.matrix</p></li>
+</ol>
+<p>A matrix of gene presence/absence in all genomes.</p>
+<ol class="arabic simple" start="2">
+<li><p>&amp;lt;prefix&amp;gt;.gene_content.nwk or &amp;lt;prefix&amp;gt;.CDS_content.nwk</p></li>
+</ol>
+<p>A tree built based on gene presence/absence in all genomes.</p>
+<ol class="arabic simple" start="3">
+<li><p>&amp;lt;prefix&amp;gt;.gene_content.curve or &amp;lt;prefix&amp;gt;.CDS_content.curve</p></li>
+</ol>
+<p>The rare-fraction curves for the pan-genome and core-genome</p>
+<ol class="arabic simple" start="4">
+<li><p>&amp;lt;prefix&amp;gt;.gene_CGAV.tree or &amp;lt;prefix&amp;gt;.CDS_CGAV.tree</p></li>
+</ol>
+<p>Core Genome Allelic Variation trees based on the sequence differences of the core genes. This is similar to  but should not be treated as a cgMLST scheme, because the genes included in the analysis depend on the genomes. The result of CGAV analysis is not comparable across different analyses.</p>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">PEPPA</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="installation.html"> installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html"> quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="parameters.html"> parameters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="inputs.html"> inputs</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#"> outputs</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#inference-ortholog-group-source-genome-exemplar-gene-allele-id-start-end-coordinates-of-alignment-in-the-exemplar-gene-start-end-coordinates-of-alignmenet-in-the-genome">inference=ortholog_group:&lt;source_genome&gt;:&lt;exemplar_gene&gt;:&lt;allele_ID&gt;:&lt;start &amp; end coordinates of alignment in the exemplar gene&gt;:&lt;start &amp; end coordinates of alignmenet in the genome&gt;</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="inputs.html" title="previous chapter">inputs</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2020, Zhemin Zhou.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.0.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/usage/outputs.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

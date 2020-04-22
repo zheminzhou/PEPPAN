@@ -1,0 +1,292 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Parameters &#8212; PEPPA 1.0 documentation</title>
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="inputs" href="inputs.html" />
+    <link rel="prev" title="Quick Start" href="quickstart.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="parameters">
+<h1>Parameters<a class="headerlink" href="#parameters" title="Permalink to this headline">¶</a></h1>
+<p>## Usage for PEPPA.py
+<a href="#id1"><span class="problematic" id="id2">``</span></a>`
+$ python PEPPA.py -h
+usage: PEPPA.py [-h] [-p PREFIX] [-g GENES] [-P PRIORITY] [-t N_THREAD]</p>
+<blockquote>
+<div><p>[-o ORTHOLOGY] [-n] [–min_cds MIN_CDS]
+[–incompleteCDS INCOMPLETECDS] [–gtable GTABLE]
+[–clust_identity CLUST_IDENTITY]
+[–clust_match_prop CLUST_MATCH_PROP] [–nucl]
+[–match_identity MATCH_IDENTITY] [–match_prop MATCH_PROP]
+[–match_len MATCH_LEN] [–match_prop1 MATCH_PROP1]
+[–match_len1 MATCH_LEN1] [–match_prop2 MATCH_PROP2]
+[–match_len2 MATCH_LEN2] [–match_frag_prop MATCH_FRAG_PROP]
+[–match_frag_len MATCH_FRAG_LEN] [–link_gap LINK_GAP]
+[–link_diff LINK_DIFF] [–allowed_sigma ALLOWED_SIGMA]
+[–pseudogene PSEUDOGENE] [–untrusted UNTRUSTED]
+[–metagenome]
+[N [N …]]</p>
+</div></blockquote>
+<p>PEPPA.py
+(1) Retieves genes and genomic sequences from GFF files and FASTA files.
+(2) Groups genes into clusters using mmseq.
+(3) Maps gene clusters back to genomes.
+(4) Discard paralogous alignments.
+(5) Discard orthologous clusters if they had regions which overlapped with the regions within other sets that had greater scores.
+(6) Re-annotate genomes using the remained of orthologs.</p>
+<dl>
+<dt>positional arguments:</dt><dd><dl class="simple">
+<dt>N                     [REQUIRED] GFF files containing both annotations and sequences.</dt><dd><p>If you have sequences and GFF annotations in separate files,
+they can also be put in as: &lt;GFF&gt;,&lt;fasta&gt;</p>
+</dd>
+</dl>
+</dd>
+<dt>optional arguments:</dt><dd><dl class="option-list">
+<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
+<dd><p>show this help message and exit</p>
+</dd>
+<dt><kbd><span class="option">-p <var>PREFIX</var></span>, <span class="option">--prefix <var>PREFIX</var></span></kbd></dt>
+<dd><p>[Default: PEPPA] prefix for the outputs.</p>
+</dd>
+<dt><kbd><span class="option">-g <var>GENES</var></span>, <span class="option">--genes <var>GENES</var></span></kbd></dt>
+<dd><p>[optional] Comma delimited filenames that contain fasta of additional genes.</p>
+</dd>
+<dt><kbd><span class="option">-P <var>PRIORITY</var></span>, <span class="option">--priority <var>PRIORITY</var></span></kbd></dt>
+<dd><p>[optional] Comma delimited, ordered list of GFFs or gene fasta files that are more reliable than others.
+Genes contained in these files are preferred in all stages.</p>
+</dd>
+<dt><kbd><span class="option">-t <var>N_THREAD</var></span>, <span class="option">--n_thread <var>N_THREAD</var></span></kbd></dt>
+<dd><p>[Default: 20] Number of threads to use. Default: 20</p>
+</dd>
+<dt><kbd><span class="option">-o <var>ORTHOLOGY</var></span>, <span class="option">--orthology <var>ORTHOLOGY</var></span></kbd></dt>
+<dd><p>[Default: nj] Method to define orthologous groups.
+nj [default], ml (for small dataset) or sbh (extremely large datasets)</p>
+</dd>
+<dt><kbd><span class="option">-n</span>, <span class="option">--noNeighborCheck</span></kbd></dt>
+<dd><p>[Default: False] Flag to disable checking of neighborhood for paralog splitting.</p>
+</dd>
+<dt><kbd><span class="option">--min_cds <var>MIN_CDS</var></span></kbd></dt>
+<dd><p>[Default: 150] Minimum length for a gene to be used in similarity searches.</p>
+</dd>
+<dt><kbd><span class="option">--incompleteCDS <var>INCOMPLETECDS</var></span></kbd></dt>
+<dd><p>[Default: ‘’] Allowed types of imperfection for reference genes.
+‘s’: allows unrecognized start codon.
+‘e’: allows unrecognized stop codon.
+‘i’: allows stop codons in the coding region.
+‘f’: allows frameshift in the coding region.
+Multiple keywords can be used together. e.g., use ‘sife’ to allow random sequences.</p>
+</dd>
+<dt><kbd><span class="option">--gtable <var>GTABLE</var></span></kbd></dt>
+<dd><p>[Default: 11] Translate table to Use. Only support 11 and 4 (for Mycoplasma)</p>
+</dd>
+<dt><kbd><span class="option">--clust_identity <var>CLUST_IDENTITY</var></span></kbd></dt>
+<dd><p>minimum identities of mmseqs clusters. Default: 0.9</p>
+</dd>
+<dt><kbd><span class="option">--clust_match_prop <var>CLUST_MATCH_PROP</var></span></kbd></dt>
+<dd><p>minimum matches in mmseqs clusters. Default: 0.9</p>
+</dd>
+<dt><kbd><span class="option">--nucl</span></kbd></dt>
+<dd><p>disable Diamond search. Fast but less sensitive when nucleotide identities &lt; 0.9</p>
+</dd>
+<dt><kbd><span class="option">--match_identity <var>MATCH_IDENTITY</var></span></kbd></dt>
+<dd><p>minimum identities in BLAST search. Default: 0.5</p>
+</dd>
+<dt><kbd><span class="option">--match_prop <var>MATCH_PROP</var></span></kbd></dt>
+<dd><p>minimum match proportion for normal genes in BLAST search. Default: 0.6</p>
+</dd>
+<dt><kbd><span class="option">--match_len <var>MATCH_LEN</var></span></kbd></dt>
+<dd><p>minimum match length for normal genes in BLAST search. Default: 250</p>
+</dd>
+<dt><kbd><span class="option">--match_prop1 <var>MATCH_PROP1</var></span></kbd></dt>
+<dd><p>minimum match proportion for short genes in BLAST search. Default: 0.8</p>
+</dd>
+<dt><kbd><span class="option">--match_len1 <var>MATCH_LEN1</var></span></kbd></dt>
+<dd><p>minimum match length for short genes in BLAST search. Default: 100</p>
+</dd>
+<dt><kbd><span class="option">--match_prop2 <var>MATCH_PROP2</var></span></kbd></dt>
+<dd><p>minimum match proportion for long genes in BLAST search. Default: 0.4</p>
+</dd>
+<dt><kbd><span class="option">--match_len2 <var>MATCH_LEN2</var></span></kbd></dt>
+<dd><p>minimum match length for long genes in BLAST search. Default: 400</p>
+</dd>
+<dt><kbd><span class="option">--match_frag_prop <var>MATCH_FRAG_PROP</var></span></kbd></dt>
+<dd><p>Min proportion of each fragment for fragmented matches. Default: 0.3</p>
+</dd>
+<dt><kbd><span class="option">--match_frag_len <var>MATCH_FRAG_LEN</var></span></kbd></dt>
+<dd><p>Min length of each fragment for fragmented matches. Default: 50</p>
+</dd>
+<dt><kbd><span class="option">--link_gap <var>LINK_GAP</var></span></kbd></dt>
+<dd><p>Consider two fragmented matches within N bases as a linked block. Default: 300</p>
+</dd>
+<dt><kbd><span class="option">--link_diff <var>LINK_DIFF</var></span></kbd></dt>
+<dd><p>Form a linked block when the covered regions in the reference gene
+and the queried genome differed by no more than this value. Default: 1.2</p>
+</dd>
+<dt><kbd><span class="option">--allowed_sigma <var>ALLOWED_SIGMA</var></span></kbd></dt>
+<dd><p>Allowed number of sigma for paralogous splitting.
+The larger, the more variations are kept as inparalogs. Default: 3.</p>
+</dd>
+<dt><kbd><span class="option">--pseudogene <var>PSEUDOGENE</var></span></kbd></dt>
+<dd><p>A match is reported as pseudogene if its coding region is less than this amount of the reference gene. Default: 0.8</p>
+</dd>
+<dt><kbd><span class="option">--untrusted <var>UNTRUSTED</var></span></kbd></dt>
+<dd><p>FORMAT: l,p; A gene is not reported if it is shorter than l and present in less than p of prior annotations. Default: 300,0.3</p>
+</dd>
+<dt><kbd><span class="option">--metagenome</span></kbd></dt>
+<dd><p>Set to metagenome mode. equals to
+“–nucl –incompleteCDS sife –clust_identity 0.99 –clust_match_prop 0.8 –match_identity 0.98 –orthology sbh”</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p><a href="#id3"><span class="problematic" id="id4">``</span></a><a href="#id5"><span class="problematic" id="id6">`</span></a></p>
+<p>## Usage for PEPPA_parser.py
+<a href="#id7"><span class="problematic" id="id8">``</span></a>`
+$ python PEPPA_parser.py -h
+usage: PEPPA_parser.py [-h] -g GFF [-p PREFIX] [-s SPLIT] [-P] [-m] [-t]</p>
+<blockquote>
+<div><p>[-a CGAV] [-c]</p>
+</div></blockquote>
+<p>PEPPA_parser.py
+(1) reads xxx.PEPPA.gff file
+(2) split it into individual GFF files
+(3) draw a present/absent matrix
+(4) create a tree based on gene presence
+(5) draw rarefraction curves of all genes and only intact CDSs</p>
+<dl>
+<dt>optional arguments:</dt><dd><dl class="option-list">
+<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
+<dd><p>show this help message and exit</p>
+</dd>
+<dt><kbd><span class="option">-g <var>GFF</var></span>, <span class="option">--gff <var>GFF</var></span></kbd></dt>
+<dd><p>[REQUIRED] generated PEPPA.gff file from PEPPA.py.</p>
+</dd>
+<dt><kbd><span class="option">-p <var>PREFIX</var></span>, <span class="option">--prefix <var>PREFIX</var></span></kbd></dt>
+<dd><p>[Default: Same prefix as GFF input] Prefix for all outputs.</p>
+</dd>
+<dt><kbd><span class="option">-s <var>SPLIT</var></span>, <span class="option">--split <var>SPLIT</var></span></kbd></dt>
+<dd><p>[optional] A folder for splitted GFF files.</p>
+</dd>
+<dt><kbd><span class="option">-P</span>, <span class="option">--pseudogene</span></kbd></dt>
+<dd><p>[Default: Use Pseudogene] Flag to ignore pseudogenes in all analyses.</p>
+</dd>
+<dt><kbd><span class="option">-m</span>, <span class="option">--matrix</span></kbd></dt>
+<dd><p>[Default: False] Flag to generate the gene present/absent matrix</p>
+</dd>
+<dt><kbd><span class="option">-t</span>, <span class="option">--tree</span></kbd></dt>
+<dd><p>[Default: False] Flag to generate the gene present/absent tree</p>
+</dd>
+<dt><kbd><span class="option">-a <var>CGAV</var></span>, <span class="option">--cgav <var>CGAV</var></span></kbd></dt>
+<dd><p>[Default: -1] Set to an integer between 0 and 100 to apply a Core Gene Allelic Variation tree.
+The value describes % of presence for a gene to be included in the analysis.
+This is similar to cgMLST tree but without an universal scheme.</p>
+</dd>
+<dt><kbd><span class="option">-c</span>, <span class="option">--curve</span></kbd></dt>
+<dd><p>[Default: False] Flag to generate a rarefraction curve.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p><a href="#id9"><span class="problematic" id="id10">``</span></a><a href="#id11"><span class="problematic" id="id12">`</span></a></p>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">PEPPA</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="installation.html"> installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html"> quickstart</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#"> parameters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="inputs.html"> inputs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="outputs.html"> outputs</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="quickstart.html" title="previous chapter">Quick Start</a></li>
+      <li>Next: <a href="inputs.html" title="next chapter">inputs</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2020, Zhemin Zhou.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.0.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/usage/parameters.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
