@@ -80,9 +80,9 @@ def getClust(prefix, genes, params) :
                             used_grps[grp] = name
                     if toWrite :
                         tmp.append(line)
-                for gene, grp in groups.items() :
-                    if grp in used_grps :
-                        groups[gene] = used_grps[grp]
+            for gene, grp in groups.items() :
+                if grp in used_grps :
+                    groups[gene] = used_grps[grp]
             with open(refFile, 'w') as fout :
                 for line in tmp :
                     fout.write(line)

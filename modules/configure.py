@@ -44,6 +44,7 @@ def checkDependencies() :
                     break
         assert externals[k] is not None, 'Required dependency {0} is not executable and has not been installed in environmental PATH variable'.format(' or '.join(vs))
 checkDependencies()
+
 # * is designated as U; index is : (ord(r)-65)*32 + ord(q)-65
 blosum62 = np.array([  4., -2.,  0., -2., -1., -2.,  0., -2., -1.,  0., -1., -1., -1., -2.,  0., -1., -1., -1.,  1.,  0., -4.,  0.,
                        -3.,  0., -2., -1.,  0.,  0.,  0.,  0.,  0.,  0., -2., 4., -3.,  4.,  1., -3., -1.,  0., -3.,  0.,  0., -4.,

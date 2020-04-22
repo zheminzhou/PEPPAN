@@ -61,7 +61,7 @@ def writeCurve(prefix, groups, pseudogene=True, n_iter=300) :
         for g in grp.keys() :
             if g not in encode :
                 encode[g] = len(encode)
-    mat = [ set([ encode[g] for g, c in grp.items() ]) for grp in groups.values() ]
+    mat = [ set( encode[g] for g, c in grp.items() ]) for grp in groups.values() ]
     mat = [np.array(list(m)) for m in mat]
     ids, cnts = np.unique(np.concatenate(mat), return_counts=True)
     x = np.arange(len(mat))+1
@@ -171,8 +171,8 @@ def writeTree(prefix, ortho) :
     tree.write(outfile='{0}_content.nwk'.format(prefix), format=1)
     logger('Gene content tree is saved in {0}_content.nwk'.format(prefix))
 
-def PEPPA_parser(args) :
-    param = arg_parser(args)
+def PEPPA_parser() :
+    param = arg_parser(sys.argv[1:])
     if param.split :
         splitGFF(param.gff, param.split, param.prefix)
     if param.matrix or param.tree or param.curve or param.cgav >= 0 :
@@ -215,5 +215,5 @@ PEPPA_parser.py
     
     return params
 if __name__ == '__main__' :
-    groups = PEPPA_parser(sys.argv[1:])
+    groups = PEPPA_parser()
     

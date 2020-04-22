@@ -12,6 +12,64 @@ makeblastdb = externals['makeblastdb']
 blastn = externals['blastn']
 diamond = externals['diamond']
 
+
+def parseDiamond(data):
+    fn, refseq, qryseq, min_id, min_cov, min_ratio = data
+    blastab = []
+    with open(fn) as fin :
+        for line in fin:
+            if line.startswith('@'):
+                continue
+            part = line.strip().split('\t')
+            if part[2] == '*': continue
+            qn, qf = part[0].rsplit(':', 1)
+            rn, rf, rx = part[2].rsplit(':', 2)
+            rs = int(part[3]) + int(rx)
+            ql, rl = len(qryseq[str(qn)]), len(refseq[str(rn)])
+            qm = len(part[9])
+            if qm * 3 < min_cov: continue
+            cov_ratio = qm * 3. / ql
+            if cov_ratio < min_ratio: continue
+            cigar = [[int(n) * 3, t] for n, t in re.findall(r'(\d+)([A-Z])', part[5])]
+            cl = np.sum([c[0] for c in cigar])
+            variation = float(part[12][5:]) * 3 if part[12].startswith('NM:') else float(
+                re.findall('NM:i:(\d+)', line)[0]) * 3
+
+            iden = 1 - round(variation / cl, 3)
+            if iden < min_id: continue
+            qf, rf = int(qf), int(rf)
+            qs = int(part[18][5:]) if part[18].startswith('ZS:') else int(re.findall('ZS:i:(\d+)', line)[0])
+
+            rm = int(np.sum([c[0] for c in cigar if c[1] in {'M', 'D'}]) / 3)
+            if rf <= 3:
+                rs, r_e = rs * 3 + rf - 3, (rs + rm - 1) * 3 + rf - 1
+            else:
+                rs, r_e = rl - (rs * 3 + rf - 6) + 1, rl - ((rs + rm - 1) * 3 + rf - 4) + 1
+            if qf <= 3:
+                qs, qe = qs * 3 + qf - 3, (qs + qm - 1) * 3 + qf - 1
+            else:
+                qs, qe = ql - (qs * 3 + qf - 6) + 1, ql - ((qs + qm - 1) * 3 + qf - 4) + 1
+                qs, qe, rs, r_e = qe, qs, r_e, rs
+                cigar = list(reversed(cigar))
+
+            cd = [c[0] for c in cigar if c[1] != 'M']
+            score = int(part[14][5:]) if part[14].startswith('ZR:') else int(re.findall('ZR:i:(\d+)', line)[0])
+            blastab.append(
+                [qn, rn, iden, cl, int(variation - sum(cd)), len(cd), qs, qe, rs, r_e, 0.0, score, ql, rl, cigar])
+    try:
+        os.unlink(fn)
+    except :
+        pass
+
+    blastab = pd.DataFrame(blastab)
+    if blastab.size > 0:
+        blastab[[0, 1]] = blastab[[0, 1]].astype(str)
+        np.save(fn+'.match.npy', blastab.values, allow_pickle=True)
+        return fn + '.match.npy'
+    else :
+        return None
+
+
 @jit(nopython=True)
 def tab2overlaps(tabs, ovl_l, ovl_p, nTab, overlaps) :
     ovlId = 0
@@ -214,11 +272,13 @@ nucEncoder[(np.array(['A', 'C', 'G', 'T']).view(asc2int),)] = (0, 1, 3, 4)
 gtable = np.array(list('KNXKNTTXTTXXXXXRSXRSIIXMIQHXQHPPXPPXXXXXRRXRRLLXLLXXXXXXXXXXXXXXXXXXXXXXXXXEDXEDAAXAAXXXXXGGXGGVVXVVXYXXYSSXSSXXXXXXCXWCLFXLF')).view(asc2int).astype(int)-65
 
 def poolBlast(params) :
-    def parseBlast(fin, min_id, min_cov, min_ratio) :
+    def parseBlast(fn, min_id, min_cov, min_ratio) :
         try:
-            blastab = pd.read_csv(fin, sep='\t',header=None)
+            blastab = pd.read_csv(fn, sep='\t',header=None, dtype=str)
         except :
             return None
+        blastab[[2, 10]] = blastab[[2, 10]].astype(float)
+        blastab[[3, 4, 5, 6, 7, 8, 9, 11, 12, 13]] = blastab[[3, 4, 5, 6, 7, 8, 9, 11, 12, 13]].astype(int)
         blastab[2] /= 100.
         blastab = blastab[(blastab[2] >= min_id) & (blastab[7]-blastab[6]+1 >= min_cov) & (blastab[7]-blastab[6]+1 >= min_ratio*blastab[12]) ]
         if blastab.shape[0] <= 0 :
@@ -226,7 +286,7 @@ def poolBlast(params) :
         else :
             blastab[14] = list(map(getCIGAR, zip(blastab[15], blastab[14])))
         blastab = blastab.drop(columns=[15])
-        blastab[[0, 1]] = blastab[[0, 1]].astype(str)
+        #blastab[[0, 1]] = blastab[[0, 1]].astype(str)
         return blastab
     
     blastn, refDb, qry, min_id, min_cov, min_ratio = params
@@ -235,8 +295,7 @@ def poolBlast(params) :
         blastn=blastn, refDb=refDb, qry=qry, min_id=min_id*100, min_ratio=min_ratio*100)
     Popen(blast_cmd, stdout=PIPE, shell=True, universal_newlines=True).communicate()
     if os.path.getsize(outfile) > 0 :
-        with open(outfile) as fin :
-            blastab = parseBlast(fin, min_id, min_cov, min_ratio)
+        blastab = parseBlast(outfile, min_id, min_cov, min_ratio)
         os.unlink(outfile)
     else :
         blastab = None
@@ -427,12 +486,9 @@ class RunBlast(object) :
         if not self.refSeq :
             self.refSeq, self.refQual = readFastq(ref)
         refDb = refNA = os.path.join(self.dirPath, 'refNA')
-        if self.refQual is not None :
-            with open(refNA, 'w') as fout :
-                for n,s in self.refSeq.items() :
-                    fout.write('>{0}\n{1}\n'.format(n, s))
-        else :
-            refNA = ref
+        with open(refNA, 'w') as fout :
+            for n,s in self.refSeq.items() :
+                fout.write('>{0}\n{1}\n'.format(n, s))
         Popen('{makeblastdb} -dbtype nucl -in {refNA} -out {refDb}'.format(makeblastdb=makeblastdb, refNA=refNA, refDb = refDb).split(), stderr=PIPE, stdout=PIPE, universal_newlines=True).communicate()
         qrySeq = sorted(list(self.qrySeq.items()), key=lambda s:-len(s[1]))
         qrys = [ os.path.join(self.dirPath, 'qryNA.{0}'.format(id)) for id in range(min(len(qrySeq), self.n_thread))]
@@ -456,51 +512,7 @@ class RunBlast(object) :
         return self.runDiamond(ref, qry, nhits=200, frames='F')
     def runDiamond(self, ref, qry, nhits=10, frames='7') :
         logger('Run diamond starts')
-        def parseDiamond(fin, refseq, qryseq, min_id, min_cov, min_ratio) :
-            blastab = []
-            for line in fin :
-                if line.startswith('@') :
-                    continue
-                part = line.strip().split('\t')
-                if part[2] == '*' : continue
-                qn, qf = part[0].rsplit(':', 1)
-                rn, rf, rx = part[2].rsplit(':', 2)
-                rs = int(part[3])+int(rx)
-                ql, rl = len(qryseq[str(qn)]), len(refseq[str(rn)])
-                qm = len(part[9])
-                if qm*3 < min_cov : continue
-                cov_ratio = qm*3./ql
-                if cov_ratio < min_ratio : continue
-                cigar = [[int(n)*3, t] for n, t in re.findall(r'(\d+)([A-Z])', part[5])]
-                cl = np.sum([c[0] for c in cigar])
-                variation = float(part[12][5:])*3 if part[12].startswith('NM:') else float(re.findall('NM:i:(\d+)', line)[0])*3
-                
-                iden = 1-round(variation/cl, 3)
-                if iden < min_id : continue
-                qf, rf = int(qf), int(rf)
-                qs = int(part[18][5:]) if part[18].startswith('ZS:') else int(re.findall('ZS:i:(\d+)', line)[0])
-                
-                
-                rm = int(np.sum([c[0] for c in cigar if c[1] in {'M', 'D'}])/3)
-                if rf <= 3 :
-                    rs, r_e = rs*3+rf-3, (rs+rm-1)*3 + rf -1
-                else :
-                    rs, r_e = rl-(rs*3+rf-6)+1, rl-((rs+rm-1)*3 + rf -4)+1
-                if qf <= 3 :
-                    qs, qe = qs*3+qf-3, (qs+qm-1)*3 + qf -1
-                else :
-                    qs, qe = ql-(qs*3+qf-6)+1, ql-((qs+qm-1)*3 + qf -4)+1
-                    qs, qe, rs, r_e = qe, qs, r_e, rs
-                    cigar = list(reversed(cigar))
-                
-                cd = [c[0] for c in cigar if c[1] != 'M']
-                score = int(part[14][5:]) if part[14].startswith('ZR:') else int(re.findall('ZR:i:(\d+)', line)[0])
-                blastab.append([qn, rn, iden, cl, int(variation-sum(cd)), len(cd), qs, qe, rs, r_e, 0.0, score, ql, rl, cigar ])
-            blastab = pd.DataFrame(blastab)
-            if blastab.size > 0 :
-                blastab[[0,1]] = blastab[[0,1]].astype(str)
-            return blastab
-        
+
         refAA = os.path.join(self.dirPath, 'refAA')
         qryAA = os.path.join(self.dirPath, 'qryAA')
         aaMatch = os.path.join(self.dirPath, 'aaMatch')
@@ -531,24 +543,21 @@ class RunBlast(object) :
                     if len(cs) :
                         toWrite.append('>{0}:{1}:{2}\n{3}\n'.format(n, id+1, ci, cs))
         
-        blastab = []
         for id in xrange(5) :
-            #logger('{0}'.format(id))
-            with open(refAA, 'w') as fout :
+            with open('{0}.{1}'.format(refAA, id), 'w') as fout :
                 for line in toWrite[id::5] :
                     fout.write(line)
             diamond_cmd = '{diamond} blastp --no-self-hits --threads {n_thread} --db {refAA} --query {qryAA} --out {aaMatch} --id {min_id} --query-cover {min_ratio} --evalue 1 -k {nhits} --dbsize 5000000 --outfmt 101'.format(
-                diamond=diamond, refAA=refAA, qryAA=qryAA, aaMatch=aaMatch, n_thread=self.n_thread, min_id=self.min_id*100., nhits=nhits, min_ratio=self.min_ratio*100.)
-            p = Popen(diamond_cmd.split(), stdout=PIPE, stderr=PIPE, universal_newlines=True).communicate()
-            tab = None
-            if os.path.getsize(aaMatch) > 0 :
-                tab = parseDiamond(open(aaMatch), self.refSeq, self.qrySeq, self.min_id, self.min_cov, self.min_ratio)
-                os.unlink(aaMatch)
-            if tab is not None:
-                blastab.append(tab)
-        blastab = pd.concat(blastab)
+                diamond=diamond, refAA='{0}.{1}'.format(refAA, id), qryAA=qryAA, aaMatch='{0}.{1}'.format(aaMatch, id), n_thread=self.n_thread, min_id=self.min_id*100., nhits=nhits, min_ratio=self.min_ratio*100.)
+            Popen(diamond_cmd.split(), stdout=PIPE, stderr=PIPE, universal_newlines=True).communicate()
+        blastab = []
+        for r in self.pool.imap_unordered(parseDiamond, [ ['{0}.{1}'.format(aaMatch, id), self.refSeq, self.qrySeq, self.min_id, self.min_cov, self.min_ratio] for id in xrange(5) ]) :
+            if r is not None :
+                blastab.append(np.load(r, allow_pickle=True))
+                os.unlink(r)
+        blastab = np.vstack(blastab)
         logger('Run diamond finishes. Got {0} alignments'.format(blastab.shape[0]))
-        return blastab.values
+        return blastab
 
 
 
