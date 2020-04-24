@@ -1481,6 +1481,7 @@ def write_output(prefix, prediction, genomes, clust_ref, encodes, old_prediction
                     else :
                         break
     with open('{0}.PEPPA.gff'.format(prefix), 'w') as fout :
+        fout.write('#!gff-version 3\n#!annotation-source PEPPA from enterobase.warwick.ac.uk\n')
         for pred in prediction :
             if pred[0] != '' :
                 if pred[15] == 'misc_feature' :

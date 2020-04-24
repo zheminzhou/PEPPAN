@@ -21,7 +21,7 @@ def splitGFF(gff, folder, prefix) :
         for line in fin :
             if line.startswith('#') :
                 continue
-            header, line = line.split(':', 1)
+            header = line.split(':', 1)[0]
             if header != prev :
                 prev = header
                 if fout :
@@ -61,7 +61,7 @@ def writeCurve(prefix, groups, pseudogene=True, n_iter=300) :
         for g in grp.keys() :
             if g not in encode :
                 encode[g] = len(encode)
-    mat = [ set( encode[g] for g, c in grp.items() ]) for grp in groups.values() ]
+    mat = [ set( encode[g] for g, c in grp.items() ) for grp in groups.values() ]
     mat = [np.array(list(m)) for m in mat]
     ids, cnts = np.unique(np.concatenate(mat), return_counts=True)
     x = np.arange(len(mat))+1
@@ -94,8 +94,8 @@ def writeCurve(prefix, groups, pseudogene=True, n_iter=300) :
         fout.write('#! Ave. {1} per genome: {0:.03f}\n'.format(np.mean([m.size for m in mat]), gtype))
         fout.write('#! No. pan {1}: {0}\n'.format(len(encode), gtype))
         fout.write('#! No. core {1}: {0}\n'.format(curves[-1, 0, 1], gtype))
-        fout.write('#! gamma (Heaps\' law model in DOI: 10.1016/j.mib.2008.09.006): {2:.03f}  CI95%: ({1:.03f} - {3:.03f}) {0}\n'.format(['Closed pan-genome! (gamma < 0)', 'Open pan-genome (gamma >= 0)'][popt_sum[0, 0, 1]>=0], *popt_sum[0, 0]))
-        fout.write('#! alpha (Power\' law model in DOI: 10.1016/j.mib.2008.09.006): {2:.03f}  CI95%: ({1:.03f} - {3:.03f}) {0}\n'.format(['Closed pan-genome! (alpha > 1)', 'Open pan-genome (alpha <= 1)'][popt_sum[1, 0, 1]<=1], *popt_sum[1, 0]))
+        fout.write('#! gamma (Heaps\' law model in DOI: 10.1016/j.mib.2008.09.006): {2:.03f}  CI95%: ({1:.03f} - {3:.03f}) {0}\n'.format(['Closed pan-genome! (gamma < 0)', 'Open pan-genome (gamma >= 0)'][int(popt_sum[0, 0, 1]>=0)], *popt_sum[0, 0]))
+        fout.write('#! alpha (Power\' law model in DOI: 10.1016/j.mib.2008.09.006): {2:.03f}  CI95%: ({1:.03f} - {3:.03f}) {0}\n'.format(['Closed pan-genome! (alpha > 1)', 'Open pan-genome (alpha <= 1)'][int(popt_sum[1, 0, 1]<=1)], *popt_sum[1, 0]))
         fout.write('#No. genome\t(Pan-genome) Median\t2.5%\t97.5%\t|\t(Core-genome) Median\t2.5%\t97.5%\n')
         summary = np.zeros([len(mat), 2, 5], dtype=int)
         for id, curve in enumerate(curves) :
@@ -193,7 +193,7 @@ def arg_parser(a) :
     import argparse
     parser = argparse.ArgumentParser(description='''
 PEPPA_parser.py 
-(1) reads xxx.PEPPA.gff file
+(1) reads <prefix>.PEPPA.gff file
 (2) split it into individual GFF files
 (3) draw a present/absent matrix
 (4) create a tree based on gene presence
