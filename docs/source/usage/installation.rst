@@ -66,4 +66,4 @@ And add the following lines to your $HOME/.bashrc file
 
 Test the installation
 ----------------------------
-
+Run through the `Quickstart <quickstart.rst>`_ (Should take < 5 minutes)
