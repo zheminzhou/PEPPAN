@@ -97,6 +97,7 @@ Parameters for PEPPA_parser.py
 --------------------------------------
 
 ::
+
   usage: PEPPA_parser.py [-h] -g GFF [-p PREFIX] [-s SPLIT] [-P] [-m] [-t]
                          [-a CGAV] [-c]
 
