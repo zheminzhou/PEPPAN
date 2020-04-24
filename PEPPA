@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 import os, re, sys, shlex, ete3, tempfile, hashlib, shutil
 import subprocess, numpy as np, pandas as pd, numba as nb
 from operator import itemgetter
@@ -1603,7 +1604,7 @@ PEPPA.py
 (5) Discard orthologous clusters if they had regions which overlapped with the regions within other sets that had greater scores.
 (6) Re-annotate genomes using the remained of orthologs. 
 ''', formatter_class=argparse.RawTextHelpFormatter)
-    parser.add_argument('GFFs', metavar='GFF', help='[REQUIRED] GFF files containing both annotations and sequences. \nIf you have sequences and GFF annotations in separate files, \nthey can also be put in as: <GFF>,<fasta>', nargs='+')
+    parser.add_argument('GFFs', metavar='GFF', help='[REQUIRED] GFF files containing both annotations and sequences. \nIf you have sequences and GFF annotations in separate files, \nthey can also be put in as: <GFF>,<fasta>', nargs='*')
     parser.add_argument('-p', '--prefix', help='[Default: PEPPA] prefix for the outputs. ', default='PEPPA')
     parser.add_argument('-g', '--genes', help='[optional] Comma delimited filenames that contain fasta of additional genes. ', default='')
     parser.add_argument('-P', '--priority', help='[optional] Comma delimited, ordered list of GFFs or gene fasta files that are more reliable than others. \nGenes contained in these files are preferred in all stages.', default='')
@@ -1617,8 +1618,8 @@ PEPPA.py
     parser.add_argument('--intron', help="Enable this to allow multiple CDSs being concatenated if they are under the same name.", default=False, action='store_true')
     parser.add_argument('--gtable', help='[Default: 11] Translate table to Use. Only support 11 and 4 (for Mycoplasma)', default=11, type=int)
 
-    parser.add_argument('--clust_identity', help='minimum identities of mmseqs clusters. Default: 0.9', default=0.9, type=float)
-    parser.add_argument('--clust_match_prop', help='minimum matches in mmseqs clusters. Default: 0.9', default=0.9, type=float)
+    parser.add_argument('--clust_identity', help='minimum identities of mmseqs clusters. Default: 0.85', default=0.85, type=float)
+    parser.add_argument('--clust_match_prop', help='minimum matches in mmseqs clusters. Default: 0.85', default=0.85, type=float)
 
     parser.add_argument('--nucl', dest='noDiamond', help='disable Diamond search. Fast but less sensitive when nucleotide identities < 0.9', default=False, action='store_true')
     parser.add_argument('--match_identity', help='minimum identities in BLAST search. Default: 0.65', default=0.65, type=float)
@@ -1639,9 +1640,15 @@ PEPPA.py
     parser.add_argument('--untrusted', help='FORMAT: l,p; A gene is not reported if it is shorter than l and present in less than p of prior annotations. Default: 300,0.3', default='300,0.3')
     parser.add_argument('--metagenome', help='Set to metagenome mode. equals to \n"--nucl --incompleteCDS sife --clust_identity 0.99 --clust_match_prop 0.8 --match_identity 0.98 --orthology sbh"', default=False, action='store_true')
     parser.add_argument('--continue', help='continue from a previously stopped run.', default=False, action='store_true')
+    parser.add_argument('--testunit', help='download four E. coli ST131 genomes for testing of PEPPA.', default=False, action='store_true')
 
     params = parser.parse_args(a)
-    #print(params)
+    if params.testunit :
+        prepare_testunit()
+        sys.exit(0)
+    elif len(params.GFFs) == 0 :
+        parser.print_help()
+        sys.exit(0)
     params.match_frag_len = min(params.min_cds, params.match_frag_len)
     params.match_len1 = min(params.min_cds, params.match_len1)
     params.clust_match_prop = max(params.clust_match_prop, params.match_prop, params.match_prop1, params.match_prop2)
@@ -1660,6 +1667,24 @@ PEPPA.py
     else :
         params.self_id = 0.005
     return params
+
+def prepare_testunit() :
+    assert not os.path.exists('examples'), 'You have already got something named "examples". Remove it or go to a different folder for the testing.'
+    os.makedirs('examples')
+    import urllib.request
+    urllib.request.urlretrieve('https://github.com/zheminzhou/PEPPA/blob/master/examples/GCF_000010485.combined.gff.gz?raw=true', \
+                               'examples/GCF_000010485.combined.gff.gz')
+    urllib.request.urlretrieve('https://github.com/zheminzhou/PEPPA/blob/master/examples/GCF_000214765.combined.gff.gz?raw=true', \
+                               'examples/GCF_000214765.combined.gff.gz')
+    urllib.request.urlretrieve('https://github.com/zheminzhou/PEPPA/blob/master/examples/GCF_001566635.combined.gff.gz?raw=true', \
+                               'examples/GCF_001566635.combined.gff.gz')
+    urllib.request.urlretrieve('https://github.com/zheminzhou/PEPPA/blob/master/examples/GCF_001577325.combined.gff.gz?raw=true', \
+                               'examples/GCF_001577325.combined.gff.gz')
+    sys.stderr.write('Folder "examples" has been created with four GFF files downloaded. \nRun:\n')
+    sys.stderr.write('$ PEPPA -P examples/GCF_000010485.combined.gff.gz --min_cds 60 --incompleteCDS s -p examples/ST131 examples/*.gff.gz\n')
+    sys.stderr.write('To test the main program. And then run:\n')
+    sys.stderr.write('$ PEPPA_parser -g examples/ST131.PEPPA.gff -s examples/PEPPA_out -m -t -c -a 95\n')
+    sys.stderr.write('To test PEPPA_parser\n')
 
 def encodeNames(genomes, genes, geneFiles, labelFile, reuse=False) :
     taxon = {g[0] for g in genomes.values()}

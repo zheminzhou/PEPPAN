@@ -376,7 +376,7 @@ class RunBlast(object) :
             return blastab
             
     def returnOverlap(self, blastab, param) :
-        logger('Calculate overlaps.')
+#        logger('Calculate overlaps.')
         
         ovl_l, ovl_p = param[1:]
         contigs = { tab[1]:id for id, tab in enumerate(blastab) }
@@ -391,7 +391,7 @@ class RunBlast(object) :
             overlaps = tab2overlaps(tabs, ovl_l, ovl_p, len(tabs), overlaps)
             res.append(overlaps[overlaps.T[2] > 0][:])
         res = np.vstack(res)
-        logger('Identified {0} overlaps.'.format(len(res)))
+ #       logger('Identified {0} overlaps.'.format(len(res)))
         return res
     
     def reScore(self, ref, qry, blastab, mode, min_id, table_id=11, perBatch=10000) :
@@ -416,7 +416,7 @@ class RunBlast(object) :
 
     def ovlFilter(self, blastab, params) :
         coverage, delta = params[1:]
-        logger('Run filtering. Start with {0} hits.'.format(len(blastab)))
+#        logger('Run filtering. Start with {0} hits.'.format(len(blastab)))
         blastab[blastab.T[8] > blastab.T[9], 8:10] *= -1
 
         blastab = pd.DataFrame(blastab).sort_values(by=[1,0,8,6]).values
@@ -448,15 +448,15 @@ class RunBlast(object) :
                     blastab[j][2] = -1.
         blastab = blastab[blastab.T[2] >= 0]
         blastab[blastab.T[8] < 0, 8:10] *= -1
-        logger('Done filtering. End with {0} hits.'.format(blastab.shape[0]))
+#        logger('Done filtering. End with {0} hits.'.format(blastab.shape[0]))
         return blastab
     def linearMerge(self, blastab, params) :
-        logger('Start merging neighboring regions.')
+#        logger('Start merging neighboring regions.')
         blastab[blastab.T[8] > blastab.T[9], 8:10] *= -1
         blastab = pd.DataFrame(blastab).sort_values([0,1,8,6]).values
         blastab = np.vstack(list(map(_linearMerge, [[matches, params] for matches in np.split(blastab, np.where(np.diff(np.unique(blastab.T[0], return_inverse=True)[1]))[0]+1 )])))
         blastab[blastab.T[8] < 0, 8:10] *= -1
-        logger('Finish merging neighboring regions.')
+ #       logger('Finish merging neighboring regions.')
         return blastab
 
     def fixEnd(self, blastab, se, ee) :
