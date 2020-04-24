@@ -1,15 +1,19 @@
 Quick Start
-***********
-## Quick Start (included in example.bash)
-```
-$ cat example.bash
-# generate pan-genome prediction using PEPPA
-python PEPPA.py -P examples/GCF_000010485.combined.gff.gz --min_cds 60 --incompleteCDS s -p examples/ST131 examples/*.gff.gz
+***************
+If you installed PEPPA via PIP, run
+::
+  PEPPA --testunit
 
-# generate summaries for PEPPA predicted CDSs and pseudogenes
-python PEPPA_parser.py -g examples/ST131.PEPPA.gff -s examples/PEPPA_out -m -t -c -a 95
+To download an 'examples/' folder which contains 4 GFF files. 
+If you installed PEPPA via git pull, the examples folder is already present in your PEPPA/ root folder. 
 
-# generate summaries for PEPPA predicted CDSs only
-python PEPPA_parser.py -g examples/ST131.PEPPA.gff -s examples/PEPPA_out -m -t -c -a 95 -P
-```
+* Test PEPPA
+::
+
+  PEPPA -P examples/GCF_000010485.combined.gff.gz --min_cds 60 --incompleteCDS s -p examples/ST131 examples/*.gff.gz
+
+* test PEPPA_parse
+::
+
+  PEPPA_parser -g examples/ST131.PEPPA.gff -s examples/PEPPA_out -m -t -c -a 95
 
