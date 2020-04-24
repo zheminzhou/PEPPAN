@@ -11,7 +11,7 @@ If you installed PEPPA via git pull, the examples/ folder is already present in 
 * Test PEPPA
 ::
 
-  PEPPA -P examples/GCF_000010485.combined.gff.gz --min_cds 60 --incompleteCDS s -p examples/ST131 examples/*.gff.gz
+  PEPPA -p examples/ST131 examples/*.gff.gz
 
 * test PEPPA_parse
 ::
