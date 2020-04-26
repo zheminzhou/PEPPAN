@@ -19,7 +19,7 @@ If you installed PEPPA via git pull, the examples/ folder is already present in 
 
 ::
 
-  PEPPA_parser -g examples/ST131.PEPPA.gff -s examples/PEPPA_out -m -t -c -a 95
+  PEPPA_parser -g examples/ST131.PEPPA.gff -s examples/PEPPA_out -t -c -a 95
 
 Key parameters for PEPPA
 ===========================
