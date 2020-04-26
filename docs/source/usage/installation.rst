@@ -18,7 +18,7 @@ Installation of dependencies
 ----------------------------
 * 64-bit Linux systems
 
-Executables for all the dependencies are included as part of the PEPPA package. So by default, you do not need to install them. If the pre-compiled executables cannot run on your system, or if you want to use a different version of any dependency, please install the corresponding package in your system and point to the executables in your $PATH variable. 
+By default, you do **NOT** need to install any dependency. Executables for all the dependencies are included as part of the PEPPA package. If the pre-compiled executables cannot run on your system, or if you want to use a different version of any dependency, please install the corresponding package in your system and point to the executables in your $PATH variable. 
 
 * bio-conda
 
