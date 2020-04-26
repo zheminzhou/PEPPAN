@@ -114,12 +114,20 @@ def writeMatrix(prefix, ortho) :
     for gs in ortho.values() :
         for g, i in gs.items() :
             genes[g] += 1
+    presences = np.array(list(genes.values()))
+    n = len(genomes)
+    with open('{0}_content.summary_statistics.txt'.format(prefix), 'w') as fout :
+        fout.write('Strict core genes\t(strains = 100%)\t{0}\n'.format(np.sum(presences >= n)))
+        fout.write('Core genes\t(99% <= strains < 100%)\t{0}\n'.format(np.sum((1.*n > presences) & (presences >= 0.99*n))))
+        fout.write('Soft core genes\t(95% <= strains < 99%)\t{0}\n'.format(np.sum((0.99*n > presences) & (presences >= 0.95*n))))
+        fout.write('Shell genes\t(15% <= strains < 95%)\t{0}\n'.format(np.sum((0.95*n > presences) & (presences >= 0.15*n))))
+        fout.write('Cloud genes\t(0% <= strains < 15%)\t{0}\n'.format(np.sum((0.15*n > presences) & (presences >= 0.0*n))))
+        fout.write('Total genes\t(0% <= strains <= 100%)\t{0}\n'.format(presences.size))
     genes = [ g[0] for g in sorted(genes.items(), key=lambda x:(-x[1], x[0])) ]
-    with open('{0}_content.matrix'.format(prefix), 'w') as fout :
-        fout.write('\t'.join(['#']+genomes)+'\n')
+    with open('{0}_content.Rtab'.format(prefix), 'w') as fout :
+        fout.write('\t'.join(['Gene']+genomes)+'\n')
         for g in genes :
             mat = [ ['0', '1'][ g in ortho[genome] ] for genome in genomes ]
-            # mat = [ ['0', '1', '-1'][ 0 if g not in ortho[genome] else (1 if ortho[genome][g]>0 else 2) ] for genome in genomes ]
             fout.write('\t'.join([g] + mat)+'\n')
     logger('Gene content matrix is saved in {0}_content.matrix'.format(prefix))
 
@@ -204,7 +212,7 @@ PEPPA_parser.py
     parser.add_argument('-p', '--prefix', help='[Default: Same prefix as GFF input] Prefix for all outputs.', default=None)
     parser.add_argument('-s', '--split', help='[optional] A folder for splitted GFF files. ', default=None)
     parser.add_argument('-P', '--pseudogene', help='[Default: Use Pseudogene] Flag to ignore pseudogenes in all analyses. ', default=False, action='store_true')
-    parser.add_argument('-m', '--matrix', help='[Default: False] Flag to generate the gene present/absent matrix', default=False, action='store_true')
+    parser.add_argument('-m', '--matrix', help='[Default: False] Flag to NOT generate the gene present/absent matrix(.Rtab)', default=True, action='store_false')
     parser.add_argument('-t', '--tree', help='[Default: False] Flag to generate the gene present/absent tree', default=False, action='store_true')
     parser.add_argument('-a', '--cgav', help='[Default: -1] Set to an integer between 0 and 100 to apply a Core Gene Allelic Variation tree. \nThe value describes %% of presence for a gene to be included in the analysis. \nThis is similar to cgMLST tree but without an universal scheme. ', default=-1, type=int)
     parser.add_argument('-c', '--curve', help='[Default: False] Flag to generate a rarefraction curve. ', default=False, action='store_true')

@@ -4,6 +4,7 @@ import subprocess, numpy as np, pandas as pd, numba as nb
 from operator import itemgetter
 import zipfile, io
 from multiprocessing import Pool, Manager, Process
+from collections import defaultdict
 try:
     from modules.configure import externals, logger, rc, transeq, readFasta, uopen, xrange, asc2int
     from modules.clust import getClust
@@ -114,7 +115,7 @@ class MapBsn(object) :
         
 
 def iter_readGFF(data) :
-    fname, gtable = data
+    fname, feature, gtable = data
     seq, cds = {}, {}
     names = {}
     fnames = fname.split(',')
@@ -148,7 +149,7 @@ def iter_readGFF(data) :
                         if len(name) == 0 :
                             name = re.findall(r'ID=([^;]+)', part[8])
     
-                        if part[2] == 'CDS' :
+                        if part[2] == feature :
                             assert len(name) > 0, logger('Error: CDS has no name. {0}'.format(line))
                             #          source_file, seqName, Start,       End,      Direction, hash, Sequences
                             gname = '{0}:{1}'.format(fprefix, name[0])
@@ -180,11 +181,11 @@ def iter_readGFF(data) :
         cds[n][:] = c[:7]
     return seq, cds
 
-def readGFF(fnames, gtable) :
+def readGFF(fnames, feature, gtable) :
     if not isinstance(fnames, list) : fnames = [fnames]
     seq, cds = {}, {}
-    #for ss, cc in map(iter_readGFF, [[fn, gtable] for fn in fnames]) :
-    for ss, cc in pool.imap_unordered(iter_readGFF, [[fn, gtable] for fn in fnames]) :
+    #for ss, cc in map(iter_readGFF, [[fn, feature, gtable] for fn in fnames]) :
+    for ss, cc in pool.imap_unordered(iter_readGFF, [[fn, feature, gtable] for fn in fnames]) :
         seq.update(ss)
         cds.update(cc)
     return seq, cds
@@ -223,10 +224,10 @@ def get_similar_pairs(clust, priorities, params) :
                     s_j += s
     if params['noDiamond'] :
         self_bsn = uberBlast('-r {0} -q {0} --blastn --min_id {1} --min_cov {2} -t {3} --min_ratio {4} -e 3,3 -p --gtable {5}'.format(\
-            clust, params['match_identity'] - 0.05, params['match_frag_len'], params['n_thread'], params['match_frag_prop']-0.05, params['gtable']).split(), pool)
+            clust, params['match_identity'] - 0.05, params['match_frag_len'], params['n_thread'], params['match_frag_prop'], params['gtable']).split(), pool)
     else :
         self_bsn = uberBlast('-r {0} -q {0} --blastn --diamondSELF -s 1 --min_id {1} --min_cov {2} -t {3} --min_ratio {4} -e 3,3 -p --gtable {5}'.format(\
-            clust, params['match_identity'] - 0.05, params['match_frag_len'], params['n_thread'], params['match_frag_prop']-0.05, params['gtable']).split(), pool)
+            clust, params['match_identity'] - 0.05, params['match_frag_len'], params['n_thread'], params['match_frag_prop'], params['gtable']).split(), pool)
     self_bsn.T[:2] = self_bsn.T[:2].astype(int)
     presence, ortho_pairs = {}, {}
     save = []
@@ -1159,8 +1160,12 @@ def synteny_resolver(prefix, prediction, nNeighbor = 2) :
     outs = pool2.imap_unordered(ite_synteny_resolver, [t for t in toRun if len(t[2])>0])
     for grp_tag, groups in outs :
         if groups is not None :
-            for id, (t, i) in enumerate(sorted(groups.items())) :
-                orthologs[i, 0] = orthologs[i[0], 0] + '/{0}'.format(id)
+            for id, i in enumerate(sorted(groups.values(), key=lambda v:[-len(v), v])) :
+                if id > 0 :
+                    if len(re.findall(b'/\d+$', orthologs[i, 0])) > 0 :
+                        orthologs[i, 0] = orthologs[i[0], 0] + '.{0}'.format(id)
+                    else :
+                        orthologs[i, 0] = orthologs[i[0], 0] + '/0.{0}'.format(id)
 
     prediction.T[0] = orthologs[prediction.T[2].astype(int), 0]
     prediction = pd.DataFrame(prediction).sort_values(by=[0, 2, 7])
@@ -1206,16 +1211,16 @@ def determineGeneStructure(data) :
     return pid, cds, start, stop
 
 def write_output(prefix, prediction, genomes, clust_ref, encodes, old_prediction, pseudogene, untrusted, gtable, clust=None, orthoPair=None) :
-    def addOld(opd) :
+    def addOld(opd, gsize) :
         # old genes in the predictions are not all included in the predicted pan-genome due to varies reasons. They are added in here
         if opd[4] == 0 :
-            return [opd[0], -1, -1, op[0], opd[0], op[0], 1., 1, opd[2]-opd[1]+1, opd[1], opd[2], opd[3], 0, 0, [0], 'CDS', '{0}:{1}-{2}'.format(opd[0].split(':', 1)[1], opd[1], opd[2])]
+            return [opd[0], -1, -1, op[0], opd[0], op[0], 1., 1, opd[2]-opd[1]+1, opd[1], opd[2], opd[3], opd[2]-opd[1]+1, gsize, [0], 'CDS', '{0}:{1}-{2}'.format(opd[0].split(':', 1)[1], opd[1], opd[2])]
         else :
             if opd[4] < 7 :
                 reason = ['', 'Too_short', 'Pseudogene:Frameshift', 'Pseudogene:No_start', 'Pseudogene:No_stop', 'Pseudogene:Premature', 'Error_in_sequence'][opd[4]]
             else :
                 reason = 'Overlap_with:{0}_g_{1}'.format(prefix, int(opd[4]/10))
-            return [opd[0], -1, -1, op[0], opd[0], op[0], 1., 1, opd[2]-opd[1]+1, opd[1], opd[2], opd[3], 0, 0, -1, 'misc_feature', reason]
+            return [opd[0], -1, -1, op[0], opd[0], op[0], 1., 1, opd[2]-opd[1]+1, opd[1], opd[2], opd[3], opd[2]-opd[1]+1, gsize, -1, 'misc_feature', reason]
     def setInFrame(part) :
         # re-locate start and end points of the alignment, making sure that it is in the coding frame of the representative gene
         if part[9] < part[10] :
@@ -1238,7 +1243,7 @@ def write_output(prefix, prediction, genomes, clust_ref, encodes, old_prediction
         part[9:12] = (part[9], part[10], '+') if d > 0 else (part[10], part[9], '-')
 
     prediction = pd.read_csv(prediction, sep='\t', header=None)
-    prediction = prediction.assign(old_tag=np.repeat('New_prediction', prediction.shape[0]), cds=np.repeat('CDS', prediction.shape[0]), s=np.min([prediction[9], prediction[10]], 0)).sort_values(by=[5, 's']).drop('s', axis=1).values
+    prediction = prediction.assign(cds=np.repeat('CDS', prediction.shape[0]), old_tag=np.repeat('New_prediction', prediction.shape[0]), s=np.min([prediction[9], prediction[10]], 0)).sort_values(by=[5, 's']).drop('s', axis=1).values
 
     for part in prediction :
         setInFrame(part)
@@ -1274,7 +1279,7 @@ def write_output(prefix, prediction, genomes, clust_ref, encodes, old_prediction
                 for k in xrange(op[1], len(op[2])) :
                     opd = op[2][k]
                     if opd[4] != 7 :
-                        old_to_add.append(addOld(opd))
+                        old_to_add.append(addOld(opd, len(genomes[encodes[op[0]]][1])))
                     
             op = [pred[5], 0, old_prediction.get(pred[5], [])]
         old_tag = []
@@ -1283,17 +1288,17 @@ def write_output(prefix, prediction, genomes, clust_ref, encodes, old_prediction
             opd = op[2][k]
             if opd[2] < s :
                 if opd[4] != 7 :
-                    old_to_add.append(addOld(opd))
+                    old_to_add.append(addOld(opd, len(genomes[encodes[op[0]]][1])))
                 op[1] = k + 1
                 continue
             elif opd[1] > e :
                 break
-            if opd[3] != pred[11] :
-                continue
             ovl = min(opd[2], e) - max(opd[1], s) + 1
             if ovl >= 300 or ovl >= 0.6 * (opd[2]-opd[1]+1) or ovl >= 0.6 * (e - s + 1) :
                 if opd[4] < 7 :
                     opd[4] = 10 * pred[2]
+                if opd[3] != pred[11]:
+                    continue
                 if pred[11] == '+' :
                     f2 = np.unique([(opd[1] - pred[9])%3, (opd[2]+1 - pred[9])%3])
                 else :
@@ -1301,12 +1306,13 @@ def write_output(prefix, prediction, genomes, clust_ref, encodes, old_prediction
                 if np.any(in1d(f2, pred[14])) :
                     old_tag.append('{0}:{1}-{2}'.format(opd[0].split(':', 1)[1], opd[1], opd[2]))
                     opd[4] = 7
+
         pred[16] = ','.join(old_tag)
     if len(op[2]) :
         for k in xrange(op[1], len(op[2])) :
             opd = op[2][k]
             if opd[4] != 7 :
-                old_to_add.append(addOld(opd))
+                old_to_add.append(addOld(opd, len(genomes[encodes[op[0]]][1])))
     maxTag = np.max(gTag)+1
     for g in old_to_add :
         maxTag += 1
@@ -1362,16 +1368,16 @@ def write_output(prefix, prediction, genomes, clust_ref, encodes, old_prediction
                 gId = encodes[part[0]]
                 if gId in clust_ref :
                     alleles[part[0]] = {clust_ref[gId]:str(1)}
-    
+
+
     for ppid in np.arange(0, len(prediction), 10000) :
         toRun = []
         for xid, pred in enumerate(prediction[ppid:ppid+10000]) :
             pid = ppid + xid
-            if pred[15] == 'misc_feature' or pred[0] == '' : #or pred[1] == -1 : 
+            if pred[15] == 'misc_feature' or pred[0] == '' : #
                 pred[13] = '{0}:{1}:{2}-{3}:{4}-{5}'.format(pred[0], 't0', pred[7], pred[8], pred[9], pred[10])
                 continue
             allowed_vary = int(pred[12]*(1-pseudogene)+0.01)
-            
             if pred[4] :
                 map_tag = '{0}:({1}){2}:{3}-{4}:{5}-{6}'.format(pred[0], pred[4].rsplit(':', 1)[-1], '{0}', pred[7], pred[8], pred[9], pred[10])
             else :
@@ -1392,7 +1398,7 @@ def write_output(prefix, prediction, genomes, clust_ref, encodes, old_prediction
                         if pp[5] != pred[5] : break
                         elif pp[15] != 'misc_feature' :
                             pred2 = pp
-                            break
+                            #break
                     if pred2 is not None:
                         e2 = e + min(3*int((pred[13] - e)/3), 3*int((pred2[10] + 300 - e)/3))
                     else :
@@ -1405,7 +1411,7 @@ def write_output(prefix, prediction, genomes, clust_ref, encodes, old_prediction
                         if pp[5] != pred[5] : break
                         elif pp[15] != 'misc_feature' :
                             pred2 = pp
-                            break
+                            #break
                     if pred2 is not None :
                         s2 = s - min(3*int((s - 1)/3), 3*int((s - pred2[9] + 300)/3))
                     else :
@@ -1414,7 +1420,7 @@ def write_output(prefix, prediction, genomes, clust_ref, encodes, old_prediction
                     e2 = e + min(3*int((pred[13] - e)/3), 60+pred[7]-1)
                     seq = rc(genomes[encodes[pred[5]]][1][(s2-1):e2])
                     rp, lp = s - s2, e2 - e
-                
+
                 seq2 = seq[(lp):(len(seq)-rp)]
                 if seq2 not in alleles[pred[0]] :
                     if pred[4] == '' and pred[7] == 1 and pred[8] == pred[12] :
@@ -1436,26 +1442,70 @@ def write_output(prefix, prediction, genomes, clust_ref, encodes, old_prediction
             pred[9:11] = start, stop
             if cds != 'CDS' :
                 pred[15] = 'pseudogene=' + cds
+    prediction = pd.DataFrame(prediction).sort_values(by=[5,9]).values
+    toMerge, unreliable = {}, {}
+    for pid, pred in enumerate(prediction) :
+        if pred[15] == 'misc_feature' or pid in toMerge :
+            continue
+        for pidx, pred2 in enumerate(prediction[pid+1:]) :
+            pid2 = pid+pidx+1
+            if pred2[15] == 'misc_feature' or pid2 in toMerge :
+                continue
+            if pred[5] == pred2[5] :
+                ovl = (pred[10] - pred2[9]+1)
+                if ovl >= 0.8*(pred[10]-pred[9]+1) or ovl >= 0.8*(pred2[10]-pred2[9]+1) :
+                    if pred[11] == pred2[11] and (pred[9]%3 == pred2[9]%3 or pred[10]%3 == pred2[10]%3) :
+                        pids = [pid, pid2] if pred[10]-pred[9] >= pred2[10] - pred2[9] else [pid2, pid]
+                        toMerge[pids[1]] = pids[0]
+                        if pred[8] - pred[7] >= pred2[8] - pred2[7] :
+                            if pid2 not in unreliable: unreliable[pid2] = 1
+                        else :
+                            if pid not in unreliable: unreliable[pid] = 1
+                        if pids[0] > pids[1] :
+                            break
+                    else :
+                        if pred[8] - pred[7] >= pred2[8] - pred2[7] :
+                            unreliable[pid2] = 2
+                        else :
+                            unreliable[pid] = 2
+                elif pred2[9] > pred[10] :
+                    break
+            else :
+                break
     cdss = {}
-    for pred in prediction :
+    for pid, pred in enumerate(prediction) :
+        if pred[15] == 'misc_feature' :
+            continue
         if pred[0] not in cdss :
             cdss[pred[0]] = [0, 0, 0, 0]
         cdss[pred[0]][2] += 1
-        if pred[16] != '' :
+        if pred[16] != '' and pid not in unreliable :
             cdss[pred[0]][3] += 1.
         if pred[0] != '' and pred[15] == 'CDS' :
             cdss[pred[0]][0] += 1.
-            if pred[16] != '' :
+            if pred[16] != '' and pid not in unreliable:
                 cdss[pred[0]][1] += 1.
+
     removed = {'':1}
     for gene, stat in cdss.items() :
-        if (stat[1]+0.5) <= 0.5 + stat[0]*untrusted[1] and (stat[3]+0.5) <= 0.5 + stat[2]*untrusted[1] :
-            if len(alleles[gene]) :
-                glen = np.mean([len(s) for s in alleles[gene]])
-            else :
-                glen = 0
-            if glen < untrusted[0] :
-                removed[gene] = 1
+        glen = np.mean([len(s) for s in alleles[gene]]) if len(alleles[gene]) else 0
+        if glen < params['min_cds'] :
+            removed[gene] = 1
+        elif (stat[1]) <= (stat[0])*untrusted[1] and \
+                (stat[3]) <= (stat[2])*untrusted[1] and \
+                glen < untrusted[0] :
+            removed[gene] = 1
+    for pid2, pid1 in sorted(toMerge.items()) :
+        p1, p2 = prediction[pid1], prediction[pid2]
+        if p1[0] not in removed and p2[0] not in removed :
+            p1[9] = min(p1[9], p2[9])
+            p1[10] = max(p1[10], p2[10])
+            p1[13] = ','.join(sorted([p1[13], p2[13]]))
+            p1[4] = ','.join(sorted([x for x in [p1[4], p2[4]] if x]))
+            p1[16] = ','.join(sorted(set(p1[16].split(',') + p2[16].split(','))-{''}))
+        elif p1[0] in removed :
+            p1[:] = p2[:]
+        p2[0] = ''
 
     with open('{0}.allele.fna'.format(prefix), 'w') as allele_file :
         for gene, seqs in alleles.items() :
@@ -1463,52 +1513,45 @@ def write_output(prefix, prediction, genomes, clust_ref, encodes, old_prediction
                 for seq, id in sorted(seqs.items(), key=lambda s:s[1]) :
                     allele_file.write('>{0}_{1}\n{2}\n'.format(gene, id, seq))
 
-    prediction = pd.DataFrame(prediction).sort_values(by=[5,9]).values
-    for pid, pred in enumerate(prediction) :
-        if pred[0] not in removed and pred[15] != 'misc_feature' :
-            for pred2 in prediction[pid+1:] :
-                if pred2[0] not in removed and pred2[15] != 'misc_feature' :
-                    if pred[5] == pred2[5] :
-                        if pred[10] >= pred2[10] or pred2[9] <= pred[9] :
-                            p, p2 = (pred, pred2) if pred[10]-pred[9] >= pred2[10] - pred2[9] else (pred2, pred)
-                            p[13] = ','.join(sorted([p[13], p2[13]]))
-                            p[4] = ','.join(sorted([x for x in [p[4], p2[4]] if x]))
-                            p[16] = ','.join(sorted(set(p[16].split(',') + p2[16].split(','))-{''}))
-                            p2[0] = ''
-                            if pred[0] == '' :
-                                break
-                        elif pred2[9] > pred[10] :
-                            break
-                    else :
-                        break
+    #prediction = prediction[prediction.T[0] != '']
     with open('{0}.PEPPA.gff'.format(prefix), 'w') as fout :
         fout.write('#!gff-version 3\n#!annotation-source PEPPA from enterobase.warwick.ac.uk\n')
-        for pred in prediction :
-            if pred[0] != '' :
-                if pred[15] == 'misc_feature' :
-                    fout.write('{0}\t{1}\tPEPPA\t{2}\t{3}\t.\t{4}\t.\tID={5};{7}inference={6}\n'.format(
-                        pred[5], 'misc_feature', pred[9], pred[10], pred[11], 
-                        '{0}_g_{1}'.format(prefix.rsplit('/', 1)[-1], pred[2]), pred[16], 
-                        'old_locus_tag={0}:{1}-{2};'.format(pred[0].split(':', 1)[1], pred[9], pred[10]), 
+        for pid, pred in enumerate(prediction) :
+            if pred[0] == '' : continue
+            if pred[15] == 'misc_feature' :
+                fout.write('{0}\t{1}\tPEPPA\t{2}\t{3}\t.\t{4}\t.\tID={5};{7}inference={6}\n'.format(
+                    pred[5], 'misc_feature', pred[9], pred[10], pred[11],
+                    '{0}_g_{1}'.format(prefix.rsplit('/', 1)[-1], pred[2]), pred[16],
+                    'old_locus_tag={0}:{1}-{2};'.format(pred[0].split(':', 1)[1], pred[9], pred[10]),
+                ))
+            else :
+                if pred[0] in removed :
+                    fout.write('{0}\t{1}\tPEPPA\t{2}\t{3}\t.\t{4}\t.\tID={5};{8}inference=ortholog_group:{6}{7}\n'.format(
+                        pred[5], 'misc_feature',
+                        pred[9], pred[10], pred[11],
+                        '{0}_g_{1}'.format(prefix.rsplit('/', 1)[-1], pred[2]), pred[13],
+                        ';{0}'.format(pred[15]) if pred[15].startswith('pseudogen') else '',
+                        'note=Removed_untrusted_prediction;' if pred[16] == '' else 'note=Removed_untrusted_prediction;old_locus_tag={0};'.format(pred[16]),
                     ))
+
+                elif unreliable.get(pid, 1) == 2 :
+                    fout.write('{0}\t{1}\tPEPPA\t{2}\t{3}\t.\t{4}\t.\tID={5};{8}inference=ortholog_group:{6}{7}\n'.format(
+                        pred[5], 'pseudogene',
+                        pred[9], pred[10], pred[11],
+                        '{0}_g_{1}'.format(prefix.rsplit('/', 1)[-1], pred[2]), pred[13],
+                        ';{0}'.format(pred[15]) if pred[15].startswith('pseudogen') else '',
+                        'note=Overlapped_prediction;' if pred[16] == '' else 'note=Overlapped_prediction;old_locus_tag={0};'.format(pred[16]),
+                    ))
+
                 else :
-                    if pred[0] not in removed :
-                        fout.write('{0}\t{1}\tPEPPA\t{2}\t{3}\t.\t{4}\t.\tID={5};{8}inference=ortholog_group:{6}{7}\n'.format(
-                            pred[5], 'pseudogene' if pred[15].startswith('pseudogen') else pred[15], 
-                            pred[9], pred[10], pred[11], 
-                            '{0}_g_{1}'.format(prefix.rsplit('/', 1)[-1], pred[2]), pred[13], 
-                            ';{0}'.format(pred[15]) if pred[15].startswith('pseudogen') else '', 
-                            '' if pred[16] == '' else 'old_locus_tag={0};'.format(pred[16]), 
-                        ))
-                    else :
-                        fout.write('{0}\t{1}\tPEPPA\t{2}\t{3}\t.\t{4}\t.\tID={5};{8}inference=ortholog_group:{6}{7}\n'.format(
-                            pred[5], 'misc_feature', 
-                            pred[9], pred[10], pred[11], 
-                            '{0}_g_{1}'.format(prefix.rsplit('/', 1)[-1], pred[2]), pred[13], 
-                            ';{0}'.format(pred[15]) if pred[15].startswith('pseudogen') else '', 
-                            'note=Removed_untrusted_prediction;' if pred[16] == '' else 'note=Removed_untrusted_prediction;old_locus_tag={0};'.format(pred[16]), 
-                        ))
-                        
+                    fout.write('{0}\t{1}\tPEPPA\t{2}\t{3}\t.\t{4}\t.\tID={5};{8}inference=ortholog_group:{6}{7}\n'.format(
+                        pred[5], 'pseudogene' if pred[15].startswith('pseudogen') else pred[15],
+                        pred[9], pred[10], pred[11],
+                        '{0}_g_{1}'.format(prefix.rsplit('/', 1)[-1], pred[2]), pred[13],
+                        ';{0}'.format(pred[15]) if pred[15].startswith('pseudogen') else '',
+                        '' if pred[16] == '' else 'old_locus_tag={0};'.format(pred[16]),
+                    ))
+
     allele_file.close()
     logger('Pan genome annotations have been saved in {0}'.format('{0}.PEPPA.gff'.format(prefix)))
     logger('Gene allelic sequences have been saved in {0}'.format('{0}.allele.fna'.format(prefix)))
@@ -1615,31 +1658,34 @@ PEPPA.py
 
     parser.add_argument('--min_cds', help='[Default: 150] Minimum length for a gene to be used in similarity searches.', default=150., type=float)
     parser.add_argument('--incompleteCDS', help="[Default: ''] Allowed types of imperfection for reference genes. \n's': allows unrecognized start codon. \n'e': allows unrecognized stop codon. \n'i': allows stop codons in the coding region. \n'f': allows frameshift in the coding region. \nMultiple keywords can be used together. e.g., use 'sife' to allow random sequences.", default='')
-    parser.add_argument('--intron', help="Enable this to allow multiple CDSs being concatenated if they are under the same name.", default=False, action='store_true')
     parser.add_argument('--gtable', help='[Default: 11] Translate table to Use. Only support 11 and 4 (for Mycoplasma)', default=11, type=int)
 
-    parser.add_argument('--clust_identity', help='minimum identities of mmseqs clusters. Default: 0.85', default=0.85, type=float)
-    parser.add_argument('--clust_match_prop', help='minimum matches in mmseqs clusters. Default: 0.85', default=0.85, type=float)
+    parser.add_argument('--clust_identity', help='minimum identities of mmseqs clusters. Default: 0.9', default=0.9, type=float)
+    parser.add_argument('--clust_match_prop', help='minimum matches in mmseqs clusters. Default: 0.8', default=0.8, type=float)
 
     parser.add_argument('--nucl', dest='noDiamond', help='disable Diamond search. Fast but less sensitive when nucleotide identities < 0.9', default=False, action='store_true')
     parser.add_argument('--match_identity', help='minimum identities in BLAST search. Default: 0.65', default=0.65, type=float)
-    parser.add_argument('--match_prop', help='minimum match proportion for normal genes in BLAST search. Default: 0.6', default=0.6, type=float)
+    parser.add_argument('--match_prop', help='minimum match proportion for normal genes in BLAST search. Default: 0.5', default=0.5, type=float)
     parser.add_argument('--match_len', help='minimum match length for normal genes in BLAST search. Default: 250', default=250., type=float)
     parser.add_argument('--match_prop1', help='minimum match proportion for short genes in BLAST search. Default: 0.8', default=0.8, type=float)
     parser.add_argument('--match_len1', help='minimum match length for short genes in BLAST search. Default: 100', default=100., type=float)
     parser.add_argument('--match_prop2', help='minimum match proportion for long genes in BLAST search. Default: 0.4', default=0.4, type=float)
     parser.add_argument('--match_len2', help='minimum match length for long genes in BLAST search. Default: 400', default=400., type=float)
-    parser.add_argument('--match_frag_prop', help='Min proportion of each fragment for fragmented matches. Default: 0.3', default=0.3, type=float)
+    parser.add_argument('--match_frag_prop', help='Min proportion of each fragment for fragmented matches. Default: 0.25', default=0.25, type=float)
     parser.add_argument('--match_frag_len', help='Min length of each fragment for fragmented matches. Default: 50', default=50., type=float)
     
     parser.add_argument('--link_gap', help='Consider two fragmented matches within N bases as a linked block. Default: 300', default=300., type=float)
     parser.add_argument('--link_diff', help='Form a linked block when the covered regions in the reference gene \nand the queried genome differed by no more than this value. Default: 1.2', default=1.2, type=float)
 
     parser.add_argument('--allowed_sigma', help='Allowed number of sigma for paralogous splitting. \nThe larger, the more variations are kept as inparalogs. Default: 3.', default=3., type=float)
-    parser.add_argument('--pseudogene', help='A match is reported as pseudogene if its coding region is less than this amount of the reference gene. Default: 0.8', default=.8, type=float)
-    parser.add_argument('--untrusted', help='FORMAT: l,p; A gene is not reported if it is shorter than l and present in less than p of prior annotations. Default: 300,0.3', default='300,0.3')
-    parser.add_argument('--metagenome', help='Set to metagenome mode. equals to \n"--nucl --incompleteCDS sife --clust_identity 0.99 --clust_match_prop 0.8 --match_identity 0.98 --orthology sbh"', default=False, action='store_true')
+    parser.add_argument('--pseudogene', help='A match is reported as pseudogene if its coding region is less than this amount of the reference gene. Default: 0.7', default=.7, type=float)
+    parser.add_argument('--untrusted', help='FORMAT: l,p; A gene is not reported if it is shorter than l and present in less than p of prior annotations. Default: 300,0.35', default='300,0.35')
     parser.add_argument('--continue', help='continue from a previously stopped run.', default=False, action='store_true')
+
+    parser.add_argument('--intron', help="Enable this to allow multiple CDSs being concatenated if they are under the same name. This is still under development. ", default=False, action='store_true')
+    parser.add_argument('--feature', help='feature to extract. Be cautious to change this value. DEFAULT: CDS', default='CDS')
+    parser.add_argument('--noncoding', help='Set to noncoding mode. This is still under development. Equals to \n"--nucl --incompleteCDS sife --untrusted 0,1"', default=False, action='store_true')
+    parser.add_argument('--metagenome', help='Set to metagenome mode. This is still under development. Equals to \n"--nucl --incompleteCDS sife --clust_identity 0.99 --clust_match_prop 0.8 --match_identity 0.98 --orthology sbh --untrusted 0,1"', default=False, action='store_true')
     parser.add_argument('--testunit', help='download four E. coli ST131 genomes for testing of PEPPA.', default=False, action='store_true')
 
     params = parser.parse_args(a)
@@ -1651,16 +1697,20 @@ PEPPA.py
         sys.exit(0)
     params.match_frag_len = min(params.min_cds, params.match_frag_len)
     params.match_len1 = min(params.min_cds, params.match_len1)
-    params.clust_match_prop = max(params.clust_match_prop, params.match_prop, params.match_prop1, params.match_prop2)
-    params.untrusted = [float(p) for p in params.untrusted.split(',')]
-    
-    if params.metagenome :
+    params.clust_match_prop = max(params.pseudogene, params.clust_match_prop, params.match_prop, params.match_prop1, params.match_prop2)
+    if params.noncoding :
+        params.noDiamond = True
+        params.incompleteCDS = 'sife'
+        params.untrusted = '0,1'
+    elif params.metagenome :
         params.noDiamond = True
         params.incompleteCDS = 'sife'
         params.clust_identity = 0.99
         params.clust_match_prop = 0.8
         params.match_identity = 0.98
         params.orthology = 'sbh'
+        params.untrusted = '0,1'
+    params.untrusted = [float(p) for p in params.untrusted.split(',')]
     params.incompleteCDS = params.incompleteCDS.lower()
     if params.noNeighborCheck :
         params.self_id = 0.002
@@ -1764,7 +1814,7 @@ def ortho() :
     pool = Pool(params['n_thread'])
     pool2 = Pool(params['n_thread'])
     
-    genomes, genes = readGFF(params['GFFs'], params['gtable'])
+    genomes, genes = readGFF(params['GFFs'], params['feature'], params['gtable'])
     genes = addGenes(genes, params['genes'], params['gtable'])
     
     params['encode'] = params['prefix']+'.encode.csv'
@@ -1850,7 +1900,6 @@ def ortho() :
         old_predictions = dict(np.load(params['old_prediction'], allow_pickle=True)) if 'old_prediction' in params else {}
     revEncode = {e:d for d, e in encodes.items()}
     old_predictions = { revEncode[int(contig)]:[np.concatenate([ [revEncode[g[0]]], g[1:]]) for g in genes ] for contig, genes in old_predictions.items() if int(contig)>=0 and genes[0][0] >= 0}
-    
     
     params['clust'] = params['prefix'] + '.clust.exemplar'
     params['self_bsn'] = params['prefix']+'.self_bsn.npy'

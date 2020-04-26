@@ -6,7 +6,7 @@ with open('README.md', encoding='utf-8') as f:
 
 setup(
     name='BIO-PEPPA',
-    version='1.1',
+    version='1.1.2',
     #scripts=['PEPPA.py'] ,
     author="Zhemin Zhou",
     author_email="zhemin.zhou@warwick.ac.uk",
