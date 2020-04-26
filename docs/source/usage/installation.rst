@@ -20,6 +20,8 @@ Installation of dependencies
 
 Executables for all the dependencies are included as part of the PEPPA package. So by default, you do not need to install them. If the pre-compiled executables cannot run on your system, or if you want to use a different version of any dependency, please install the corresponding package in your system and point to the executables in your $PATH variable. 
 
+* bio-conda
+
 The best way to install dependencies is via bio-conda. To do so, install `Anaconda <https://docs.anaconda.com/anaconda/install/>`_ or `Miniconda <https://docs.conda.io/en/latest/miniconda.html>`_. Then install bioconda and the dependencies.
 ::
 
