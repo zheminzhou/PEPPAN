@@ -48,6 +48,6 @@ This controls the minimal size of a gene to be considered in the final pan-genom
 
 --pseudogene
 --------------------
-A coding region in the genome is assigned as a pseudogene, if its size is shorter than other orthologous genes by a certain proportion. By default, PEPPA sets --pseudogene 0.8, therefore any gene that is >=80% of the representative gene will be assign as an "intact" gene, otherwise a "pseudogene". 
+A coding region in the genome is assigned as a pseudogene, if its size is shorter than other orthologous genes by a certain proportion. By default, PEPPA sets --pseudogene 0.7, therefore any gene that is >=70% of the representative gene will be assign as an "intact" gene, otherwise a "pseudogene". 
 
 See `Parameters <parameters.rst>`_ for description of other paramters implemented in PEPPA. 
