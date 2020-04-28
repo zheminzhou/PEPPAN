@@ -511,20 +511,20 @@ def load_conflict(data) :
                     conflicts.append([g, id, d[idx1:idx2]])
     return conflicts
 
-def filt_genes(prefix, groups, ortho_groups, global_file, cfl_file, priorities, scores, encodes) :
-    ortho_groups = np.vstack([ortho_groups[:, :2], ortho_groups[:, [1,0]]])
-    conflicts = {}
-    new_groups = {}
+def filt_genes(groups, ortho_groups, global_file, cfl_file, priorities, scores, encodes) :
+    ortho_groups = np.vstack([ortho_groups[:, :2], ortho_groups[:, [1,0]]])*1000
+    priorities = { k*1000:v for k, v in priorities.items() }
+    scores = { k*1000:v for k, v in scores.items() }
+    conflicts, new_groups = {}, {}
+
     encodes = np.array([n for i, n in sorted([[i, n] for n, i in encodes.items()])])
-    
-    clust_ref = { int(n):s for n, s in readFasta(params['clust']).items()}
-    
+    clust_ref = { int(n)*1000:s for n, s in readFasta(params['clust']).items()}
     used, pangenome, panList = {}, {}, {}
     lowest_p = max([v[0] for v in priorities.values()])    
     while len(scores) > 0 :
-        # get top 200 genes
+        # get top 1000 genes
         ortho_groups = ortho_groups[np.all(in1d(ortho_groups, list(scores.keys())).reshape(ortho_groups.shape), 1)]
-        genes = get_gene(scores, priorities, ortho_groups, cnt=500)
+        genes = get_gene(scores, priorities, ortho_groups, cnt=1000)
         if len(genes) <= 0 :
             continue
         to_run, (min_score, min_rank) = [], genes[-1][1:]
@@ -535,7 +535,7 @@ def filt_genes(prefix, groups, ortho_groups, global_file, cfl_file, priorities, 
         for gene, score in list(genes.items()) :
             present_iden = 0
             if gene not in new_groups :
-                mat = groups.get(gene)
+                mat = groups.get(int(gene/1000))
                 mat.T[4] = (10000 * mat.T[3]/np.max(mat.T[3])).astype(int)
                 for m in mat :
                     v = used.get(m[5], None)
@@ -563,14 +563,14 @@ def filt_genes(prefix, groups, ortho_groups, global_file, cfl_file, priorities, 
                        int(i) < int(i + chunk_size)]
             for cfl in pool2.imap_unordered(load_conflict, [ [cfl_file, ids] for ids in tab_ids ]) :
                 for g, i, c in cfl :
-                    conflicts[g][i] = c
+                    conflicts[g*1000][i] = c
         
         used2 = set([])
         for gene, score in sorted(genes.items(), key=lambda x:-x[1]) :
             if gene not in new_groups :
                 mat = tmpSet.get(gene)
                 unsure = np.sum([ 1 for m in mat if m[3] > 0 and m[5] in used2 ])
-                if unsure >= np.sum(mat.T[3]>0) * 0.8 :
+                if unsure >= np.sum(mat.T[3]>0) * 0.6 :
                     genes.pop(gene)
                 else :
                     cfl = conflicts.get(int(gene), {})
@@ -610,17 +610,17 @@ def filt_genes(prefix, groups, ortho_groups, global_file, cfl_file, priorities, 
                     if (not inparalog and np.min(mat[:, 3]) >= 10000 * params['clust_identity']) or len(mat) <= 1 :
                         new_groups[gene] = mat
                     else :
-                        to_run.append([mat, inparalog, len(clust_ref[ mat[0][0] ]), params['map_bsn']+'.seq.npz', global_file])
+                        to_run.append([mat, inparalog, len(clust_ref[ mat[0][0]*1000 ]), params['map_bsn']+'.seq.npz', global_file])
 
             working_groups = pool2.imap_unordered(filt_per_group, sorted(to_run, key=lambda r:(r[1], r[0].shape[0]*r[0].shape[0]*r[2]), reverse=True))
             #working_groups = [filt_per_group(d) for d in to_run]
             for working_group in working_groups :
-                gene = working_group[0][0][0]
+                gene = working_group[0][0][0]*1000
                 new_groups[gene] = working_group[0]
                 if len(working_group) > 1 :
-                    cfl = conflicts.get(int(gene), {})
+                    cfl = conflicts.get(gene, {})
                     for id, matches in enumerate(working_group[1:]) :
-                        ng = np.round(gene + 0.001*(id+2), 3)
+                        ng = gene + (id+2)
                         new_groups[ng] = matches
                         conflicts[ng] = { mid:cfl.pop(mid, {}) for mid in matches.T[5] }
                         scores[ng] = np.sum(np.abs(matches[np.unique(matches.T[1], return_index=True)[1]].T[2]))
@@ -641,7 +641,6 @@ def filt_genes(prefix, groups, ortho_groups, global_file, cfl_file, priorities, 
                         else :
                             used2.update( { int(k/10) for k in cfl.get(m[5],[]) + [m[5]*10] } )
                             
-                    genomes = np.unique(mat[~kept, 1])
                     mat = mat[kept]
                     new_groups[gene] = mat
         
@@ -656,7 +655,6 @@ def filt_genes(prefix, groups, ortho_groups, global_file, cfl_file, priorities, 
             if score < min_score :
                 break
             mat = new_groups.pop(gene)
-            x = encodes[int(gene)] + '/' + str(int(1000*(gene - int(gene)) + 0.5)) if isinstance(gene, float) else encodes[gene]
             # third, check its overlapping again
             paralog = False
             supergroup, used2 = {}, {}
@@ -666,7 +664,7 @@ def filt_genes(prefix, groups, ortho_groups, global_file, cfl_file, priorities, 
                 conflict = used.get(gid, None) if gid in used else used2.get(gid, None)
                 if conflict is not None :
                     if conflict < 0 :
-                        superC = pangenome[-(conflict+1)]
+                        superC = pangenome[-(conflict+1000)]
                         if superC not in supergroup :
                             supergroup[superC] = 0
                         if m[4] >= params['clust_identity'] * 10000 :
@@ -683,9 +681,9 @@ def filt_genes(prefix, groups, ortho_groups, global_file, cfl_file, priorities, 
                         g2, gs = int(gg/10), gg % 10
                         if gs == 1 :
                             if g2 not in used :
-                                used2[g2] = -(gene+1)
-                        else  :
-                            used2[g2] = gene+1 if gs == 2 else 0
+                                used2[g2] = -(gene+1000)
+                        else :
+                            used2[g2] = gene+1000 if gs == 2 else 0
                     
             if idens < (params['clust_identity']-0.02)*10000 :
                 scores.pop(gene)
@@ -719,10 +717,10 @@ def filt_genes(prefix, groups, ortho_groups, global_file, cfl_file, priorities, 
             
             panList[pangene] = panList.get(pangene, set([])) | set(mat.T[1])
 
-            pangene_name = encodes[int(pangene)] + '/' + str(int(1000*(pangene - int(pangene)) + 0.5)) if isinstance(pangene, float) else encodes[pangene]
-            gene_name = encodes[int(gene)] + '/' + str(int(1000*(gene - int(gene)) + 0.5)) if isinstance(gene, float) else encodes[gene]
+            pangene_name = (encodes[int(pangene/1000)] + '/' + str(pangene % 1000)) if pangene % 1000 > 0 else encodes[int(pangene/1000)]
+            gene_name = (encodes[int(gene/1000)] + '/' + str(gene % 1000)) if gene % 1000 > 0 else encodes[int(gene/1000)]
             if len(pangenome) % 100 == 0 :
-                logger('{4} / {5}: pan gene "{3}" : "{0}" picked from rank {1} and score {2}'.format(encodes[mat[0][0]], min_rank, score/10000., pangene_name, len(pangenome), len(scores)+len(pangenome)))
+                logger('{4} / {5}: pan gene "{3}" : "{0}" picked from rank {1} and score {2}'.format(gene_name, min_rank, score/10000., pangene_name, len(pangenome), len(scores)+len(pangenome)))
             mat_out.append([pangene_name, gene_name, min_rank, mat])
     mat_out.append([0, 0, 0, []])
     return 
@@ -1733,7 +1731,7 @@ def prepare_testunit() :
     sys.stderr.write('Folder "examples" has been created with four GFF files downloaded. \nRun:\n')
     sys.stderr.write('$ PEPPA -p examples/ST131 -P examples/GCF_000010485.combined.gff.gz examples/*.gff.gz\n')
     sys.stderr.write('To test the main program. And then run:\n')
-    sys.stderr.write('$ PEPPA_parser -g examples/ST131.PEPPA.gff -s examples/PEPPA_out -m -t -c -a 95\n')
+    sys.stderr.write('$ PEPPA_parser -g examples/ST131.PEPPA.gff -s examples/PEPPA_out -t -c -a 95\n')
     sys.stderr.write('To test PEPPA_parser\n')
 
 def encodeNames(genomes, genes, geneFiles, labelFile, reuse=False) :
@@ -1882,7 +1880,7 @@ def ortho() :
         writeProcess.start()
         gene_scores = initializing(params['map_bsn'], params.get('global', None))
         with MapBsn(params['map_bsn']+'.tab.npz') as tab_conn :
-            filt_genes(params['prefix'], tab_conn, np.load(params['self_bsn'], allow_pickle=True), params['global'], params['map_bsn']+'.conflicts.npz', priorities, gene_scores, encodes)
+            filt_genes(tab_conn, np.load(params['self_bsn'], allow_pickle=True), params['global'], params['map_bsn']+'.conflicts.npz', priorities, gene_scores, encodes)
         writeProcess.join()
         shutil.move(params['prediction']+'.working', params['prediction'])
     else :

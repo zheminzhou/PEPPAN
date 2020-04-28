@@ -1,12 +1,12 @@
 import os, sys
 from setuptools import setup, find_packages
 
-with open('README.md', encoding='utf-8') as f:
+with open('README.rst', encoding='utf-8') as f:
     long_description = f.read()
 
 setup(
     name='BIO-PEPPA',
-    version='1.1.2',
+    version='1.1.4',
     #scripts=['PEPPA.py'] ,
     author="Zhemin Zhou",
     author_email="zhemin.zhou@warwick.ac.uk",
@@ -24,7 +24,7 @@ setup(
             'PEPPA = PEPPA.PEPPA:ortho',
             'PEPPA_parser = PEPPA.PEPPA_parser:PEPPA_parser',
     ]},
-    package_data={'PEPPA': ['LICENSE', 'README.md', 'dependencies/*', 'modules/*.py']},
+    package_data={'PEPPA': ['LICENSE', 'README.*', 'dependencies/*', 'modules/*.py']},
     classifiers=[
         'Development Status :: 5 - Production/Stable',
         "Programming Language :: Python :: 3.5",
