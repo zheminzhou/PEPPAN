@@ -522,9 +522,9 @@ def filt_genes(groups, ortho_groups, global_file, cfl_file, priorities, scores, 
     used, pangenome, panList = {}, {}, {}
     lowest_p = max([v[0] for v in priorities.values()])    
     while len(scores) > 0 :
-        # get top 1000 genes
+        # get top 500 genes
         ortho_groups = ortho_groups[np.all(in1d(ortho_groups, list(scores.keys())).reshape(ortho_groups.shape), 1)]
-        genes = get_gene(scores, priorities, ortho_groups, cnt=1000)
+        genes = get_gene(scores, priorities, ortho_groups, cnt=500)
         if len(genes) <= 0 :
             continue
         to_run, (min_score, min_rank) = [], genes[-1][1:]
@@ -1489,9 +1489,10 @@ def write_output(prefix, prediction, genomes, clust_ref, encodes, old_prediction
         glen = np.mean([len(s) for s in alleles[gene]]) if len(alleles[gene]) else 0
         if glen < params['min_cds'] :
             removed[gene] = 1
-        elif (stat[1]) <= (stat[0])*untrusted[1] and \
-                (stat[3]) <= (stat[2])*untrusted[1] and \
-                glen < untrusted[0] :
+        elif (stat[1]+0.5)*(stat[3]+0.5) < (stat[0]+1)*untrusted[1]*(stat[2]+1)*untrusted[1] and \
+                glen <= untrusted[0] :
+            removed[gene] = 1
+        elif stat[3] == 0 and len(re.findall(r'/[\.\d]+$', gene)) :
             removed[gene] = 1
     for pid2, pid1 in sorted(toMerge.items()) :
         p1, p2 = prediction[pid1], prediction[pid2]
@@ -1676,14 +1677,14 @@ PEPPA.py
     parser.add_argument('--link_diff', help='Form a linked block when the covered regions in the reference gene \nand the queried genome differed by no more than this value. Default: 1.2', default=1.2, type=float)
 
     parser.add_argument('--allowed_sigma', help='Allowed number of sigma for paralogous splitting. \nThe larger, the more variations are kept as inparalogs. Default: 3.', default=3., type=float)
-    parser.add_argument('--pseudogene', help='A match is reported as pseudogene if its coding region is less than this amount of the reference gene. Default: 0.7', default=.7, type=float)
-    parser.add_argument('--untrusted', help='FORMAT: l,p; A gene is not reported if it is shorter than l and present in less than p of prior annotations. Default: 300,0.35', default='300,0.35')
+    parser.add_argument('--pseudogene', help='A match is reported as a pseudogene if its coding region is less than a proportion of the reference gene. Default: 0.7', default=.7, type=float)
+    parser.add_argument('--untrusted', help='FORMAT: l,p; A gene is not reported if it is not greater than "l" and present in less than "p" of GFF files. Default: 450,0.35', default='450,0.35')
     parser.add_argument('--continue', help='continue from a previously stopped run.', default=False, action='store_true')
 
-    parser.add_argument('--intron', help="Enable this to allow multiple CDSs being concatenated if they are under the same name. This is still under development. ", default=False, action='store_true')
+    #parser.add_argument('--intron', help="Enable this to allow multiple CDSs being concatenated if they are under the same name. This is still under development. ", default=False, action='store_true')
     parser.add_argument('--feature', help='feature to extract. Be cautious to change this value. DEFAULT: CDS', default='CDS')
-    parser.add_argument('--noncoding', help='Set to noncoding mode. This is still under development. Equals to \n"--nucl --incompleteCDS sife --untrusted 0,1"', default=False, action='store_true')
-    parser.add_argument('--metagenome', help='Set to metagenome mode. This is still under development. Equals to \n"--nucl --incompleteCDS sife --clust_identity 0.99 --clust_match_prop 0.8 --match_identity 0.98 --orthology sbh --untrusted 0,1"', default=False, action='store_true')
+    parser.add_argument('--noncoding', help='Set to noncoding mode. This is still under development. Equals to \n"--nucl --incompleteCDS sife"', default=False, action='store_true')
+    parser.add_argument('--metagenome', help='Set to metagenome mode. This is still under development. Equals to \n"--nucl --incompleteCDS sife --clust_identity 0.99 --clust_match_prop 0.8 --match_identity 0.98 --orthology sbh"', default=False, action='store_true')
     parser.add_argument('--testunit', help='download four E. coli ST131 genomes for testing of PEPPA.', default=False, action='store_true')
 
     params = parser.parse_args(a)
@@ -1699,7 +1700,6 @@ PEPPA.py
     if params.noncoding :
         params.noDiamond = True
         params.incompleteCDS = 'sife'
-        params.untrusted = '0,1'
     elif params.metagenome :
         params.noDiamond = True
         params.incompleteCDS = 'sife'
@@ -1707,7 +1707,6 @@ PEPPA.py
         params.clust_match_prop = 0.8
         params.match_identity = 0.98
         params.orthology = 'sbh'
-        params.untrusted = '0,1'
     params.untrusted = [float(p) for p in params.untrusted.split(',')]
     params.incompleteCDS = params.incompleteCDS.lower()
     if params.noNeighborCheck :
