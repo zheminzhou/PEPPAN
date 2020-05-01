@@ -140,14 +140,14 @@ def _linearMerge(data) :
     for id, m1 in enumerate(matches) :
         rLen1 = m1[7] - m1[6] + 1
         groups.append([ m1[11], m1[2], rLen1, 0, id ])
-        if m1[6] > tailing and ((m1[8] > 0 and m1[8] - 1 <= gapDist) or (m1[8] < 0 and m1[13] + m1[8] < gapDist)) :   # any hit within the last 150 bps to either end of a scaffold is a potential fragmented gene
+        if m1[6] > tailing and ((m1[8] > 0 and m1[8] - 1 <= gapDist) or (m1[8] < 0 and m1[13] + m1[8] < gapDist)) :   # any hit within the last 300 bps to either end of a scaffold is a potential fragmented gene
             edges[1].append([id, m1])
         if m1[7] <= m1[12] - tailing :
             if (m1[8] > 0 and m1[13]-m1[9] <= gapDist) or (m1[8] < 0 and -1-m1[9] < gapDist) :
                 edges[0].append([id, m1])
             for jd in xrange(id+1, nSave) :
                 m2 = matches[jd]
-                if m1[1] != m2[1] or (m1[8] < 0 and m2[8] > 0) or m2[8] - m1[9] -1 >= gapDist :    # maximum 300bps between two continuous hits in the same scaffold
+                if m1[1] != m2[1] or (m1[8] < 0 and m2[8] > 0) or m2[8] - m1[9] -1 >= gapDist :    # maximum 600bps between two continuous hits in the same scaffold
                     break
                 rLen, qLen = m2[7]-m1[6]+1, m2[9]-m1[8]+1
                 if abs(m1[2]-m2[2]) > 0.3 or m1[8]+3 >= m2[8] or m1[9]+3 >= m2[9] or m1[6]+3 >= m2[6] or m1[7]+3 >= m2[7] or m2[6] - m1[7] -1 >= gapDist \
@@ -581,8 +581,8 @@ def uberBlast(args, extPool=None) :
     parser.add_argument('--filter_cov', help='[DEFAULT: 0.9] ', default=0.9, type=float)
     parser.add_argument('--filter_score', help='[DEFAULT: 0] ', default=0., type=float)
     parser.add_argument('-m', '--linear_merge', help='[DEFAULT: False] Merge consective alignments', default=False, action='store_true')
-    parser.add_argument('--merge_gap', help='[DEFAULT: 300] ', default=300., type=float)
-    parser.add_argument('--merge_diff', help='[DEFAULT: 1.2] ', default=1.2, type=float)
+    parser.add_argument('--merge_gap', help='[DEFAULT: 600] ', default=600., type=float)
+    parser.add_argument('--merge_diff', help='[DEFAULT: 1.5] ', default=1.5, type=float)
     parser.add_argument('-O', '--return_overlap', help='[DEFAULT: False] Report overlapped alignments', default=False, action='store_true')
     parser.add_argument('--overlap_length', help='[DEFAULT: 300] Minimum overlap to report', default=300, type=float)
     parser.add_argument('--overlap_proportion', help='[DEFAULT: 0.6] Minimum overlap proportion to report', default=0.6, type=float)

@@ -438,11 +438,12 @@ def filt_per_group(data) :
                     node.leaf_size = np.sum([group_size[t] for t in node.leaves])
                     if len(node.leaves) : 
                         oleaves = all_tips - node.leaves
-                        ic = np.sum(incompatible[list(node.leaves)].T[:, list(oleaves)], (1,2))
-                        node.ic = [ic[0], max(1., ic[1])]
+                        c = incompatible[list(node.leaves)].T[:, list(oleaves)]
+                        ic = np.sum(c, (1,2))
+                        node.ic = [ic[0]/max(1., ic[1]), np.sum(c[1, (c[0] > c[1])])]
                     else :
-                        node.ic = [0., 1.]
-                cut_node = [[n.ic[0]/np.sqrt(n.ic[1]), n.ic[0]/n.ic[1], n.dist, n] for n in gene_phy.iter_descendants('postorder') if n.ic[0] > n.ic[1]]
+                        node.ic = [0., 0.]
+                cut_node = [[n.ic[0]*np.sqrt(n.ic[1]), n.ic[0], n.dist, n] for n in gene_phy.iter_descendants('postorder') if n.ic[0] > 1]
                 if len(cut_node) > 0 :
                     cut_node = max(cut_node, key=lambda x:(x[0], x[1], x[2]))[3]
                     prev_node = cut_node.up
@@ -1673,8 +1674,8 @@ PEPPA.py
     parser.add_argument('--match_frag_prop', help='Min proportion of each fragment for fragmented matches. Default: 0.25', default=0.25, type=float)
     parser.add_argument('--match_frag_len', help='Min length of each fragment for fragmented matches. Default: 50', default=50., type=float)
     
-    parser.add_argument('--link_gap', help='Consider two fragmented matches within N bases as a linked block. Default: 300', default=300., type=float)
-    parser.add_argument('--link_diff', help='Form a linked block when the covered regions in the reference gene \nand the queried genome differed by no more than this value. Default: 1.2', default=1.2, type=float)
+    parser.add_argument('--link_gap', help='Consider two fragmented matches within N bases as a linked block. Default: 600', default=600., type=float)
+    parser.add_argument('--link_diff', help='Form a linked block when the covered regions in the reference gene \nand the queried genome differed by no more than this value. Default: 1.5', default=1.5, type=float)
 
     parser.add_argument('--allowed_sigma', help='Allowed number of sigma for paralogous splitting. \nThe larger, the more variations are kept as inparalogs. Default: 3.', default=3., type=float)
     parser.add_argument('--pseudogene', help='A match is reported as a pseudogene if its coding region is less than a proportion of the reference gene. Default: 0.7', default=.7, type=float)
