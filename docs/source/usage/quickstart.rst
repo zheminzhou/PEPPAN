@@ -40,14 +40,20 @@ Details see `Outputs <outputs.rst>`_.
 
 --match_identity
 --------------------
-match_identity controls the minimal identity of an alignment to be considered in the pan-genome construction. PEPPA is insensitive to the value of this parameter, as long as it is low enough to cover the genetic diversity of the genomes. However, reducing this value will increase the run time of the program. By default, PEPPA accepts a minimum match identity of 65%. Use a lower value if you run PEPPA between genomes from different genera.
+match_identity controls the minimal identity of an alignment to be considered in the pan-genome construction. PEPPA is insensitive to the value of this parameter, as long as it is low enough to cover the genetic diversity of the genomes. However, reducing this value will increase the run time of the program. 
+
+By default, PEPPA accepts a minimum match identity of 65%. And the minimum match identity that has been tested (in *Mycoplasma*) is 40%. Use a lower value if you run PEPPA between genomes from different genera.
 
 --min_cds
 --------------------
-This controls the minimal size of a gene to be considered in the final pan-genome. Short genes are less reliable and also hard to detect in the similarity-based search. By default, PEPPA ignores genes with <= 150 bps in their sizes. However, you can always reduce the minimum size of the accepted genes if trust the original annotations.
+This controls the minimal size of a gene to be considered in the final pan-genome. Short genes are less reliable and also hard to detect in a similarity-based search. 
+
+By default, PEPPA ignores genes with <= 120 bps in their sizes. You can reduce the minimum size of accepted genes if you trust the original annotations (e.g., 90 bps to be consistent with the default settings in `prodigal and prokka<http://gensoft.pasteur.fr/docs/prodigal/2.50/_README>`_). 
 
 --pseudogene
 --------------------
-A coding region in the genome is assigned as a pseudogene, if its size is shorter than other orthologous genes by a certain proportion. By default, PEPPA sets --pseudogene 0.7, therefore any gene that is >=70% of the representative gene will be assign as an "intact" gene, otherwise a "pseudogene". 
+A coding region in the genome is assigned as a pseudogene, if its size is shorter than other orthologous genes by a certain proportion.
+
+By default, PEPPA sets --pseudogene 0.8, therefore any gene that is >=80% of the representative gene will be assign as an "intact" gene, otherwise a "pseudogene". 
 
 See `Parameters <parameters.rst>`_ for description of other paramters implemented in PEPPA. 
