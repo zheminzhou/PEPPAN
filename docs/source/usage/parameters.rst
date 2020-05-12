@@ -1,6 +1,6 @@
 Parameters
 **********
-Please find detailed description for several important parameters in the `quickstart <quickstart>`_.
+Please find detailed description for several important parameters in the `quickstart <quickstart.rst>`_.
 
 Below is a list of all parameters in PEPPA and PEPPA_parser.
 
