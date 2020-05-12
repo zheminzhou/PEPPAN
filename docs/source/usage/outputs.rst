@@ -1,16 +1,15 @@
-Outputs
-**********
-Outputs for PEPPA
+
+Output for PEPPA
 ========================
-There are two final outputs for PEPPA:
+There are two final output files for PEPPA:
 
 1. <prefix>.PEPPA.gff
    
-This file includes all pan-genes predicted by PEPPA in GFF3 format. Intact CDSs are assigned as "CDS", disrupted genes (potential pseudogenes) are assigned as "pseudogene" and suspicious annotations that are removed are described as "misc_feature" entries. 
+This file includes all pan-genes predicted by PEPPA in GFF3 format. Intact CDSs are labeled as "CDS", disrupted genes (potential pseudogenes) are labeled as "pseudogene" and suspicious annotations ignored in the pipeline are labeled as "misc_feature" entries. 
 
-* If any of the predicted CDSs and psueogenes overlaps with old gene predictions in the original GFF files, the old gene is described in an attribute named "old_locus_tag" of the entry. 
+* If any of the predicted CDSs and pseudogenes overlap with original gene predictions in the input GFF files, the original gene is labeled "old_locus_tag" of the entry. 
 
-* Each gene and pseudogene is assigned into one of the orthologous groups. This orthologous group is described in "inference" field in a format of: 
+* Each gene and pseudogene is assigned to one of the orthologous groups. This orthologous group is described in the "inference" field in the following format: 
 
 ::
 
@@ -18,7 +17,7 @@ This file includes all pan-genes predicted by PEPPA in GFF3 format. Intact CDSs 
 
 2. <prefix>.alleles.fna
    
-This file contains all the unique alleles of all pan genes predicted by PEPPA. <prefix>.alleles.fna can be fed into the 'BLASTdb' module in `EToKi <https://github.com/zheminzhou/EToKi>`_ package as a seed of the whole genome MLST scheme. 
+This file contains all unique alleles of all pan genes predicted by PEPPA. <prefix>.alleles.fna can be fed into the 'BLASTdb' module in the `EToKi <https://github.com/zheminzhou/EToKi>`_ package as a seed for the whole genome MLST scheme. 
 
 The file looks like:
 
@@ -32,7 +31,7 @@ The file looks like:
   ATGAATATGGAAGAAATTGTGGCCCTTAGTGTAAAGCATAACGTCTCGGATCTACACCTGTGCAGCGCCTGGCCCGCACGATGGCGCATTCGCGGGCGAATGGAAGCTGCGCCGTTTGATGCGCTGGACGTCGAAGAGCTACTGCGGGAGTGGCTGGATGACGATCAGCGGACAATATTGCTGGAGAATGGTCAGTTGGATTTTGCTGTGTCGCTGGCGGAAAACCAGCGGTTGCGTGGCAGTGCGTTCGCGCAACGGCAAGGTATTTCTCTGGCATTACGGTTGTTACCTTCGCACTGTCCACAGCTCGAACAGCTTGGTGCGCCACCGGTATTGCCGGAATTACTCAAGAGCGAGAATGGCCTGATTCTGGTGACGGGGGCGACGGGGAGCGGCAAATCTACCACGCTGGCGGCGATGGTTGGCTATCTCAATCAACATGCCGATGCGCATATTCTGACGCTGGAAGATCCTGTGGAATATCTCTATACCAGTCAGCGATGTTTGATCCAACAGCGGGAGATTGGTTTGCACTGTATGACTTTCGCATCGGGATTGCGGGCTGCATTGCGGGAAGATCCTGATGTGATTTTGCTCGGAGAGCTGCGTGATAGCGAGACAATCCGTCTGGCGCTGACGGCGGCAGAAACCGGGCATCTGGTGCTGGCGACATTACACACGCGCGGCGCAGCGCAGGCAGTTGAGCGACTGGTGGATTCGTTTCCGGCGCAGGAAAAAGATCCCGTGCGTAATCAACTGGCAGGTAGTTTACGGGCGGTGTTGTCACAAAAGCTGGAAGTGGATAAACAGGAAGGACGCGTGGCGCTGTTTGAATTACTGATTAACACACCCGCGGTGGGGAATTTGATTCGTGAAGGGAAAACCCACCAGTTACCGCATGTTATTCAAACCGGGCAGCAGGTGGGGATGATAACGTTTCAGCAGAGTTATCAGCAGCGGGTGAAAGAAGGGCGCTTGTGA
 
 
-The header of each allele contains three parts of <source genome>:<gene name>_<allele_id>, and here the three alleles of ECSF_RS14680 can be found in the gff output as:
+The header of each allele contains three parts as <source genome>:<gene name>_<allele_id>, and here the three alleles of ECSF_RS14680 can be found in the gff output as:
 
 ::
 
@@ -42,17 +41,17 @@ The header of each allele contains three parts of <source genome>:<gene name>_<a
 	GCF_001577325:NZ_CP014522.1     CDS     PEPPA   3238450 3239430 .       -       .       ID=ST131.ml_g_18034;old_locus_tag=AVR76_RS16295:3238450-3239430;inference=ortholog_group:GCF_000010485:ECSF_RS14680:3:1-981:3238450-3239430
    
    
-Outputs for PEPPA_parser
+Output for PEPPA_parser
 ==========================
 PEPPA_parse.py generates: 
 
 1. <prefix>.PEPPA.gene_content.summary_statistics.txt
 
-A summary table of the pan-genome, in a format similar to "summary_statistics.txt" from Roary
+A summary table of the pan-genome, in a format similar to "summary_statistics.txt" from Roary.
 
 2. <prefix>.PEPPA.gene_content.matrix or <prefix>.PEPPA.CDS_content.matrix
 
-A matrix of gene presence/absence in all genomes. This file is similar to "gene_presence_absence.Rtab" from Roary
+A matrix of gene presence/absence in all genomes. This file is similar to "gene_presence_absence.Rtab" from Roary.
 
 3. <prefix>.gene_content.nwk or <prefix>.CDS_content.nwk
 
@@ -60,7 +59,7 @@ A FastTree phylogeny built based on gene presence/absence.
 
 4. <prefix>.gene_content.curve or <prefix>.CDS_content.curve
 
-The rare-fraction curves for the pan-genome and core-genome. It also reports gamma factor for the Heaps' law model and alpha factor for the Power' law model. Find additional details about these factors at `https://doi.org/10.1016/j.mib.2008.09.006`_
+The rare-fraction curves for the pan-genome and core-genome. It also reports the gamma factor for the Heaps' law model and the alpha factor for the Power' law model. Find additional details about these factors at `https://doi.org/10.1016/j.mib.2008.09.006`_
 
 5. <prefix>.gene_CGAV.tree or <prefix>.CDS_CGAV.tree
 
