@@ -50,19 +50,19 @@ PEPPA_parse.py generates:
 
 A summary table of the pan-genome, in a format similar to "summary_statistics.txt" from Roary
 
-1. <prefix>.PEPPA.gene_content.matrix or <prefix>.PEPPA.CDS_content.matrix
+2. <prefix>.PEPPA.gene_content.matrix or <prefix>.PEPPA.CDS_content.matrix
 
 A matrix of gene presence/absence in all genomes. This file is similar to "gene_presence_absence.Rtab" from Roary
 
-2. <prefix>.gene_content.nwk or <prefix>.CDS_content.nwk
+3. <prefix>.gene_content.nwk or <prefix>.CDS_content.nwk
 
 A FastTree phylogeny built based on gene presence/absence. 
 
-3. <prefix>.gene_content.curve or <prefix>.CDS_content.curve
+4. <prefix>.gene_content.curve or <prefix>.CDS_content.curve
 
 The rare-fraction curves for the pan-genome and core-genome. It also reports gamma factor for the Heaps' law model and alpha factor for the Power' law model. Find additional details about these factors at `https://doi.org/10.1016/j.mib.2008.09.006`_
 
-4. <prefix>.gene_CGAV.tree or <prefix>.CDS_CGAV.tree
+5. <prefix>.gene_CGAV.tree or <prefix>.CDS_CGAV.tree
 
 Core Genome Allelic Variation trees built by RapidNJ, based on the allelic differences of the core genes. Find additional information about this tree in `GrapeTree <https://github.com/achtman-lab/GrapeTree>`_. 
 
