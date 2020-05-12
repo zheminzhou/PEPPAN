@@ -46,21 +46,23 @@ Outputs for PEPPA_parser
 ==========================
 PEPPA_parse.py generates: 
 
-1. <prefix>.
+1. <prefix>.PEPPA.gene_content.summary_statistics.txt
 
-1. <prefix>.gene_content.matrix or <prefix>.CDS_content.matrix
+A summary table of the pan-genome, in a format similar to "summary_statistics.txt" from Roary
 
-A matrix of gene presence/absence in all genomes.
+1. <prefix>.PEPPA.gene_content.matrix or <prefix>.PEPPA.CDS_content.matrix
+
+A matrix of gene presence/absence in all genomes. This file is similar to "gene_presence_absence.Rtab" from Roary
 
 2. <prefix>.gene_content.nwk or <prefix>.CDS_content.nwk
 
-A tree built based on gene presence/absence in all genomes.
+A FastTree phylogeny built based on gene presence/absence. 
 
 3. <prefix>.gene_content.curve or <prefix>.CDS_content.curve
 
-The rare-fraction curves for the pan-genome and core-genome
+The rare-fraction curves for the pan-genome and core-genome. It also reports gamma factor for the Heaps' law model and alpha factor for the Power' law model. Find additional details about these factors at `https://doi.org/10.1016/j.mib.2008.09.006`_
 
 4. <prefix>.gene_CGAV.tree or <prefix>.CDS_CGAV.tree
 
-Core Genome Allelic Variation trees based on the sequence differences of the core genes. This is similar to  but should not be treated as a cgMLST scheme, because the genes included in the analysis depend on the genomes. The result of CGAV analysis is not comparable across different analyses. 
+Core Genome Allelic Variation trees built by RapidNJ, based on the allelic differences of the core genes. Find additional information about this tree in `GrapeTree <https://github.com/achtman-lab/GrapeTree>`_. 
 
