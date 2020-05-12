@@ -1639,7 +1639,7 @@ def get_global_difference(geneGroups, cluFile, bsnFile, geneInGenomes, nGene = 1
 def add_args(a) :
     import argparse
     parser = argparse.ArgumentParser(description='''
-PEPPA.py 
+PEPPA.py
 (1) Retieves genes and genomic sequences from GFF files and FASTA files.
 (2) Groups genes into clusters using mmseq.
 (3) Maps gene clusters back to genomes. 
@@ -1656,7 +1656,7 @@ PEPPA.py
     parser.add_argument('-o', '--orthology', metavar='nj,ml,sbh', help='[Default: nj] Method to define orthologous groups. \nnj [default], ml (for small dataset) or sbh (extremely large datasets)', default='nj')
     parser.add_argument('-n', '--noNeighborCheck', help='[Default: False] Flag to disable checking of neighborhood for paralog splitting. ', default=False, action='store_true')
 
-    parser.add_argument('--min_cds', help='[Default: 150] Minimum length for a gene to be used in similarity searches.', default=150., type=float)
+    parser.add_argument('--min_cds', help='[Default: 120] Minimum length for a gene to be used in similarity searches.', default=120., type=float)
     parser.add_argument('--incompleteCDS', help="[Default: ''] Allowed types of imperfection for reference genes. \n's': allows unrecognized start codon. \n'e': allows unrecognized stop codon. \n'i': allows stop codons in the coding region. \n'f': allows frameshift in the coding region. \nMultiple keywords can be used together. e.g., use 'sife' to allow random sequences.", default='')
     parser.add_argument('--gtable', help='[Default: 11] Translate table to Use. Only support 11 and 4 (for Mycoplasma)', default=11, type=int)
 
@@ -1678,7 +1678,7 @@ PEPPA.py
     parser.add_argument('--link_diff', help='Form a linked block when the covered regions in the reference gene \nand the queried genome differed by no more than this value. Default: 1.5', default=1.5, type=float)
 
     parser.add_argument('--allowed_sigma', help='Allowed number of sigma for paralogous splitting. \nThe larger, the more variations are kept as inparalogs. Default: 3.', default=3., type=float)
-    parser.add_argument('--pseudogene', help='A match is reported as a pseudogene if its coding region is less than a proportion of the reference gene. Default: 0.7', default=.7, type=float)
+    parser.add_argument('--pseudogene', help='A match is reported as a pseudogene if its coding region is less than a proportion of the reference gene. Default: 0.8', default=.8, type=float)
     parser.add_argument('--untrusted', help='FORMAT: l,p; A gene is not reported if it is not greater than "l" and present in less than "p" of GFF files. Default: 450,0.35', default='450,0.35')
     parser.add_argument('--continue', help='continue from a previously stopped run.', default=False, action='store_true')
 
