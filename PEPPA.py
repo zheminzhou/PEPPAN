@@ -1820,6 +1820,10 @@ def ortho() :
     priorities = load_priority(params.get('priority', ''), genes, encodes)
     geneInGenomes = { g:i[0] for g, i in genes.items() }
     
+    if len(genes) == 0 :
+        logger('Did not find any gene from the inputs. Please check the format of the GFF files.')
+        sys.exit(1)
+
     params['old_prediction'] = params['prefix']+'.old_prediction.npz'
     if not params['continue'] or not os.path.isfile(params['old_prediction']) :
         params['continue'] = False
