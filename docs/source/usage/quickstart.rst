@@ -48,7 +48,7 @@ By default, PEPPA accepts a minimum match identity of 65%. And the minimum match
 --------------------
 This controls the minimal size of a gene to be considered in the final pan-genome. Short genes are less reliable and also hard to detect in a similarity-based search. 
 
-By default, PEPPA ignores genes with <= 120 bps in their sizes. You can reduce the minimum size of accepted genes if you trust the original annotations (e.g., 90 bps to be consistent with the default settings in `prodigal and prokka<http://gensoft.pasteur.fr/docs/prodigal/2.50/_README>`_). 
+By default, PEPPA ignores genes with <= 120 bps in their sizes. You can reduce the minimum size of accepted genes if you trust the original annotations (e.g., 90 bps to be consistent with the default settings in `prodigal and prokka <http://gensoft.pasteur.fr/docs/prodigal/2.50/_README>`_). 
 
 --pseudogene
 --------------------
