@@ -79,14 +79,15 @@ This parameter is very important if you want to make use of existing knowledge o
 This option accepts multiple MULTI-FASTA files delimited by comma(,), or colon(:). The files connected by colons are treated equally, whereas those separated by commas have different priorities. 
 
 For example, --priority FILE_1,FILE_2:FILE_3,FILE_4 will give priorities as: 
------------------
+
++--------+------+
 |Priority|FILE  |
------------------
++========+======+
 |1       |FILE_1|
------------------
++--------+------+
 |2       |FILE_2|
------------------
++--------+------+
 |2       |FILE_3|
------------------
++--------+------+
 |3       |FILE_4|
------------------
++--------+------+
