@@ -1,5 +1,9 @@
 Parameters
 **********
+Please find detailed description for several important parameters in the `quickstart <quickstart.rst>`_.
+
+Below is a list of all parameters in PEPPA and PEPPA_parser.
+
 ::
 
 	usage: PEPPA [-h] [-p PREFIX] [-g GENES] [-P PRIORITY] [-t N_THREAD]
@@ -14,8 +18,7 @@ Parameters
 				 [--match_frag_len MATCH_FRAG_LEN] [--link_gap LINK_GAP]
 				 [--link_diff LINK_DIFF] [--allowed_sigma ALLOWED_SIGMA]
 				 [--pseudogene PSEUDOGENE] [--untrusted UNTRUSTED] [--continue]
-				 [--intron] [--feature FEATURE] [--noncoding] [--metagenome]
-				 [--testunit]
+				 [--feature FEATURE] [--noncoding] [--metagenome] [--testunit]
 				 [GFF [GFF ...]]
 
 	PEPPA.py
@@ -87,17 +90,17 @@ Parameters
 							Allowed number of sigma for paralogous splitting.
 							The larger, the more variations are kept as inparalogs. Default: 3.
 	  --pseudogene PSEUDOGENE
-							A match is reported as pseudogene if its coding region is less than this amount of the reference gene. Default: 0.7
+							A match is reported as a pseudogene if its coding region is less than a proportion of the reference gene. Default: 0.7
 	  --untrusted UNTRUSTED
-							FORMAT: l,p; A gene is not reported if it is shorter than l and present in less than p of prior annotations. Default: 300,0.35
+							FORMAT: l,p; A gene is not reported if it is not greater than "l" and present in less than "p" of GFF files. Default: 450,0.35
 	  --continue            continue from a previously stopped run.
-	  --intron              Enable this to allow multiple CDSs being concatenated if they are under the same name. This is still under development.
 	  --feature FEATURE     feature to extract. Be cautious to change this value. DEFAULT: CDS
 	  --noncoding           Set to noncoding mode. This is still under development. Equals to
-							"--nucl --incompleteCDS sife --untrusted 0,1"
+							"--nucl --incompleteCDS sife"
 	  --metagenome          Set to metagenome mode. This is still under development. Equals to
-							"--nucl --incompleteCDS sife --clust_identity 0.99 --clust_match_prop 0.8 --match_identity 0.98 --orthology sbh --untrusted 0,1"
+							"--nucl --incompleteCDS sife --clust_identity 0.99 --clust_match_prop 0.8 --match_identity 0.98 --orthology sbh"
 	  --testunit            download four E. coli ST131 genomes for testing of PEPPA.
+
 
 
 Parameters for PEPPA_parser.py
