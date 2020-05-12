@@ -22,9 +22,9 @@ Below is a list of all parameters in PEPPA and PEPPA_parser.
 				 [GFF [GFF ...]]
 
 	PEPPA.py
-	(1) Retieves genes and genomic sequences from GFF files and FASTA files.
-	(2) Groups genes into clusters using mmseq.
-	(3) Maps gene clusters back to genomes.
+	(1) Retrieve genes and genomic sequences from GFF files and FASTA files.
+	(2) Group genes into clusters using mmseq.
+	(3) Map gene clusters back to genomes.
 	(4) Discard paralogous alignments.
 	(5) Discard orthologous clusters if they had regions which overlapped with the regions within other sets that had greater scores.
 	(6) Re-annotate genomes using the remained of orthologs.
@@ -32,19 +32,19 @@ Below is a list of all parameters in PEPPA and PEPPA_parser.
 	positional arguments:
 	  GFF                   [REQUIRED] GFF files containing both annotations and sequences.
 							If you have sequences and GFF annotations in separate files,
-							they can also be put in as: <GFF>,<fasta>
+							they can also be defined as: <GFF>,<fasta>
 
 	optional arguments:
-	  -h, --help            show this help message and exit
+	  -h, --help            show this help message and exit.
 	  -p PREFIX, --prefix PREFIX
-							[Default: PEPPA] prefix for the outputs.
+							[Default: PEPPA] prefix for the output files.
 	  -g GENES, --genes GENES
-							[optional] Comma delimited filenames that contain fasta of additional genes.
+							[optional] comma delimited filenames of fasta files containing additional genes.
 	  -P PRIORITY, --priority PRIORITY
-							[optional] Comma delimited, ordered list of GFFs or gene fasta files that are more reliable than others.
-							Genes contained in these files are preferred in all stages.
+							[optional] comma delimited, ordered list of GFFs or gene fasta files that are more reliable than others.
+							genes contained in these files are preferred in all stages.
 	  -t N_THREAD, --n_thread N_THREAD
-							[Default: 8] Number of threads to use. Default: 8
+							[Default: 8] Number of threads to use.
 	  -o nj,ml,sbh, --orthology nj,ml,sbh
 							[Default: nj] Method to define orthologous groups.
 							nj [default], ml (for small dataset) or sbh (extremely large datasets)
@@ -58,7 +58,7 @@ Below is a list of all parameters in PEPPA and PEPPA_parser.
 							'i': allows stop codons in the coding region.
 							'f': allows frameshift in the coding region.
 							Multiple keywords can be used together. e.g., use 'sife' to allow random sequences.
-	  --gtable GTABLE       [Default: 11] Translate table to Use. Only support 11 and 4 (for Mycoplasma)
+	  --gtable GTABLE       [Default: 11] Translate table to use. Only supports 11 and 4 (for Mycoplasma)
 	  --clust_identity CLUST_IDENTITY
 							minimum identities of mmseqs clusters. Default: 0.9
 	  --clust_match_prop CLUST_MATCH_PROP
@@ -79,15 +79,15 @@ Below is a list of all parameters in PEPPA and PEPPA_parser.
 	  --match_len2 MATCH_LEN2
 							minimum match length for long genes in BLAST search. Default: 400
 	  --match_frag_prop MATCH_FRAG_PROP
-							Min proportion of each fragment for fragmented matches. Default: 0.25
+							min proportion of each fragment for fragmented matches. Default: 0.25
 	  --match_frag_len MATCH_FRAG_LEN
-							Min length of each fragment for fragmented matches. Default: 50
-	  --link_gap LINK_GAP   Consider two fragmented matches within N bases as a linked block. Default: 300
+							min length of each fragment for fragmented matches. Default: 50
+	  --link_gap LINK_GAP   consider two fragmented matches within N bases as a linked block. Default: 300
 	  --link_diff LINK_DIFF
-							Form a linked block when the covered regions in the reference gene
+							form a linked block when the covered regions in the reference gene
 							and the queried genome differed by no more than this value. Default: 1.2
 	  --allowed_sigma ALLOWED_SIGMA
-							Allowed number of sigma for paralogous splitting.
+							allowed number of sigma for paralogous splitting.
 							The larger, the more variations are kept as inparalogs. Default: 3.
 	  --pseudogene PSEUDOGENE
 							A match is reported as a pseudogene if its coding region is less than a proportion of the reference gene. Default: 0.7
@@ -112,7 +112,7 @@ Parameters for PEPPA_parser.py
 						[-a CGAV] [-c]
 
 	PEPPA_parser.py
-	(1) reads <prefix>.PEPPA.gff file
+	(1) read <prefix>.PEPPA.gff file
 	(2) split it into individual GFF files
 	(3) draw a present/absent matrix
 	(4) create a tree based on gene presence
