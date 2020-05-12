@@ -3,7 +3,7 @@ Installation
 ****************
 PEPPA has the following dependencies:
 
-Required dependencies (You do not need to install any of these if you are based on a 64-bit Linux)
+Required dependencies 
 
 * `mmseqs2 <https://github.com/soedinglab/MMseqs2>`_
 * `ncbi-blast+ <https://blast.ncbi.nlm.nih.gov/Blast.cgi?PAGE_TYPE=BlastDocs&DOC_TYPE=Download>`_
@@ -14,11 +14,12 @@ Optional dependencies
 
 * `fasttree2 <http://www.microbesonline.org/fasttree/#Install>`_ (For --orthology ml)
 
+
 Installation of dependencies
 ----------------------------
 * 64-bit Linux systems
 
-**By default, you do NOT need to install any dependency**. Executables for all the dependencies are included as part of the PEPPA package. If the pre-compiled executables cannot run on your system, or if you want to use a different version of any dependency, please install the corresponding package in your system and point to the executables in your $PATH variable. 
+**By default, you do NOT need to install any of the dependencies**. Executables for all dependencies are included as part of the PEPPA package. If the pre-compiled executables do not run on your system, or if you want to use a different version of any dependency, please install the corresponding package in your system and point to the executables in your $PATH variable. 
 
 * bio-conda
 
@@ -34,14 +35,14 @@ The best way to install dependencies is via bio-conda. To do so, install `Anacon
   conda install rapidnj
   conda install fasttree
 
-You can check the presence of these dependencies with:
+You can check the installation of all dependencies with:
 ::
 
   command -v mmseqs blastn rapidnj diamond fasttree
 
 Alternatively, you can always install each dependency by following the introductions in its link above. 
 
-Install PEPPA
+Installing PEPPA
 ----------------------------
 * Installing from PIP
 
@@ -52,20 +53,20 @@ Install PEPPA
 
 * Installing from source (advanced Linux users only)
 
-Pull down the latest software from (https://github.com/zheminzhou/PEPPA).
+Clone the latest software version from (https://github.com/zheminzhou/PEPPA), e.g.:
 
-Choose somewhere to put it, for example in your home directory (no root access required):
 ::
 
   cd $HOME
   git pull https://github.com/zheminzhou/PEPPA.git
 
-And add the following lines to your $HOME/.bashrc file
+Then add the following lines to your $HOME/.bashrc file:
+
 ::
 
   export PATH=$PATH:$HOME/PEPPA/
 
 
-Test the installation
+Testing the installation
 ----------------------------
-Run through the `Quickstart <quickstart.rst>`_ (Should take < 5 minutes)
+Run through the `Quickstart <quickstart.rst>`_ instructions (should take < 5 minutes).
