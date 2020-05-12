@@ -15,7 +15,7 @@ except:
     from .modules.uberBlast import uberBlast
 
 params = dict(
-    ml = '{fasttree} {0} -nt -gtr -pseudo', 
+    ml = '{fasttree} -nt -gtr -pseudo {0}', 
     nj = '{rapidnj} -i fa -t d {0}', 
 )
 
@@ -614,7 +614,7 @@ def filt_genes(groups, ortho_groups, global_file, cfl_file, priorities, scores, 
                         to_run.append([mat, inparalog, len(clust_ref[ mat[0][0]*1000 ]), params['map_bsn']+'.seq.npz', global_file])
 
             working_groups = pool2.imap_unordered(filt_per_group, sorted(to_run, key=lambda r:(r[1], r[0].shape[0]*r[0].shape[0]*r[2]), reverse=True))
-            #working_groups = [filt_per_group(d) for d in to_run]
+            #working_groups = list(map(filt_per_group, sorted(to_run, key=lambda r:(r[1], r[0].shape[0]*r[0].shape[0]*r[2]), reverse=True)))
             for working_group in working_groups :
                 gene = working_group[0][0][0]*1000
                 new_groups[gene] = working_group[0]
@@ -1352,7 +1352,7 @@ def write_output(prefix, prediction, genomes, clust_ref, encodes, old_prediction
 
     # reorder after adding old genes
     try :
-        prediction = pd.DataFrame(np.vstack([prediction, np.array([g for g in old_to_add])])).sort_values(by=[5,9]).values
+        prediction = pd.DataFrame(np.vstack([prediction, np.array([g for g in old_to_add], dtype=object)])).sort_values(by=[5,9]).values
     except :
         prediction = pd.DataFrame(prediction).sort_values(by=[5,9]).values
     # if the secondary repr gene is the same as the primary gene, remove it
