@@ -26,7 +26,7 @@ Key parameters for PEPPA
 GFFs
 -------------------------
 
-The main input for PEPPA. The nucleotide sequences can be integrated in the same file or in a separate file. Details see `Inputs <inputs.rst>`_
+The main input for PEPPA. The nucleotide sequences can be integrated in the same file or in a separate file. For details see `Inputs <inputs.rst>`_
 
 -p or --prefix
 -------------------------
@@ -36,7 +36,7 @@ The prefix for the output files, as well as intermediate files. The final output
 1. <prefix>.PEPPA.gff
 2. <prefix>.allele.fasta
 
-Details see `Outputs <outputs.rst>`_.
+For details see `Outputs <outputs.rst>`_.
 
 --match_identity FLOAT
 -------------------------
@@ -52,19 +52,19 @@ By default, PEPPA ignores genes with <= 120 bps length. You can reduce the minim
 
 --pseudogene FLOAT
 -------------------------
-A coding region in the genome is assigned as a pseudogene, if its size is shorter than other orthologous genes by a certain proportion.
+A coding region in the genome is assigned as a pseudogene if its length is shorter than other orthologous genes by a certain proportion.
 
-By default, PEPPA sets --pseudogene 0.8, therefore any gene that is >=80% of the representative gene will be assign as an "intact" gene, otherwise a "pseudogene". 
+By default, PEPPA sets --pseudogene 0.8, therefore any gene that is >=80% of the representative gene will be assigned as an "intact" gene, otherwise a "pseudogene". 
 
-See `Parameters <parameters.rst>`_ for descriptions of other paramters implemented in PEPPA. 
+See `Parameters <parameters.rst>`_ for descriptions of other parameters implemented in PEPPA. 
 
 --orthology <nj,ml,sbh>
 -------------------------
 Three algorithms for separating paralogous genes from orthologous genes. 
 
-* sbh: Single BLAST hit. Paralogous genes will be determined by their greater distances to the representative genes. Least accurate (comparable to MCL used by many other pan-genome pipelines), and is the most efficient in both run time and storage space. 
-* nj: [Default] Neighbor-joining algorithm (based on RapidNJ). Quick and scalable to 1,000's of genomes. However, it might be less accurate than a maximum-likelihood algorithm. 
-* ml: Maximum-likelihood algorithm (based on FastTree). The most accurate algorithm. Still fast for 10's of genomes but is not suggested for > 100 genomes. 
+* sbh: Single BLAST hit. Paralogous genes will be determined by having greater distances to the representative genes than orthologs. Least accurate (comparable to MCL used by many other pan-genome pipelines), and is the most efficient in both run time and storage space. 
+* nj: [Default] Neighbor-joining algorithm (based on RapidNJ). Quick and scalable to 1,000s of genomes. However, it might be less accurate than a maximum-likelihood algorithm. 
+* ml: Maximum-likelihood algorithm (based on FastTree). The most accurate algorithm. Still fast for 10s of genomes but is not suggested for > 100 genomes. 
 
 --genes FILENAME,FILENAME
 -------------------------
@@ -74,7 +74,7 @@ This option accepts multiple MULTI-FASTA files delimited by comma.
 
 --priority FILENAME,FILENAME:FILENAME
 ----------------------------------------
-This parameter is very important if you want to make use of existing knowledge of some genes, such as those that have been valided by manual revise, transcriptomics, or protein structures. The genes included in the listed filenames will be used as representatives over the unlisted genes. 
+This parameter is very important if you want to make use of existing knowledge of some genes, such as those that have been valided by manual curation, transcriptomics, or protein structures. The genes included in the listed filenames will be used as representatives over the unlisted genes. 
 
 This option accepts multiple MULTI-FASTA files delimited by comma(,), or colon(:). The files connected by colons are treated equally, whereas those separated by commas have different priorities. 
 
