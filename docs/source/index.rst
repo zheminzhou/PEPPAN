@@ -24,7 +24,7 @@ as well as similarity-based gene predictions that support consistent annotations
 
 Citation
 --------
-If you use GrapeTree please cite the pre-print in BioRxiv:
+If you use PEPPA please cite the pre-print in BioRxiv:
 
 Z Zhou, M Achtman (2020) "Accurate reconstruction of the pan- and core- genomes of bacteria with PEPPA"
 bioRxiv, doi: [https://doi.org/10.1101/2020.01.03.894154](https://doi.org/10.1101/2020.01.03.894154)
