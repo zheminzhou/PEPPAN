@@ -9,7 +9,7 @@ This file includes all pan-genes predicted by PEPPA in GFF3 format. Intact CDSs 
 
 * If any of the predicted CDSs and pseudogenes overlap with original gene predictions in the input GFF files, the original gene is labeled "old_locus_tag" of the entry. 
 
-* Each gene and pseudogene is assigned to one of the orthologous groups. This orthologous group is described in the "inference" field in the following format: 
+* Each gene and pseudogene is assigned to an ortholog group. This ortholog group is described in the "inference" field in the following format: 
 
 ::
 
@@ -17,7 +17,7 @@ This file includes all pan-genes predicted by PEPPA in GFF3 format. Intact CDSs 
 
 2. <prefix>.alleles.fna
    
-This file contains all unique alleles of all pan genes predicted by PEPPA. <prefix>.alleles.fna can be fed into the 'BLASTdb' module in the `EToKi <https://github.com/zheminzhou/EToKi>`_ package as a seed for the whole genome MLST scheme. 
+This file contains all unique alleles of all pan-genes predicted by PEPPA. <prefix>.alleles.fna can be fed into the 'BLASTdb' module in the `EToKi <https://github.com/zheminzhou/EToKi>`_ package as a seed for the whole genome MLST scheme. 
 
 The file looks like:
 
@@ -59,7 +59,7 @@ A FastTree phylogeny built based on gene presence/absence.
 
 4. <prefix>.gene_content.curve or <prefix>.CDS_content.curve
 
-The rare-fraction curves for the pan-genome and core-genome. It also reports the gamma factor for the Heaps' law model and the alpha factor for the Power' law model. Find additional details about these factors at `https://doi.org/10.1016/j.mib.2008.09.006`_
+Rarefaction curves for the pan-genome and core-genome. It also reports the gamma factor for the Heaps' law model and the alpha factor for the Power' law model. Find additional details about these factors at `https://doi.org/10.1016/j.mib.2008.09.006`_
 
 5. <prefix>.gene_CGAV.tree or <prefix>.CDS_CGAV.tree
 
