@@ -1640,17 +1640,17 @@ def add_args(a) :
     import argparse
     parser = argparse.ArgumentParser(description='''
 PEPPA.py
-(1) Retieves genes and genomic sequences from GFF files and FASTA files.
-(2) Groups genes into clusters using mmseq.
-(3) Maps gene clusters back to genomes. 
+(1) Retieve genes and genomic sequences from GFF files and FASTA files.
+(2) Group genes into clusters using mmseq.
+(3) Map gene clusters back to genomes. 
 (4) Discard paralogous alignments.
 (5) Discard orthologous clusters if they had regions which overlapped with the regions within other sets that had greater scores.
 (6) Re-annotate genomes using the remained of orthologs. 
 ''', formatter_class=argparse.RawTextHelpFormatter)
-    parser.add_argument('GFFs', metavar='GFF', help='[REQUIRED] GFF files containing both annotations and sequences. \nIf you have sequences and GFF annotations in separate files, \nthey can also be put in as: <GFF>,<fasta>', nargs='*')
+    parser.add_argument('GFFs', metavar='GFF', help='[REQUIRED] GFF files containing both annotations and sequences. \nIf you have sequences and GFF annotations in separate files, \nthey can also be defined as: <GFF>,<fasta>', nargs='*')
     parser.add_argument('-p', '--prefix', help='[Default: PEPPA] prefix for the outputs. ', default='PEPPA')
-    parser.add_argument('-g', '--genes', help='[optional] Comma delimited filenames that contain fasta of additional genes. ', default='')
-    parser.add_argument('-P', '--priority', help='[optional] Comma delimited, ordered list of GFFs or gene fasta files that are more reliable than others. \nGenes contained in these files are preferred in all stages.', default='')
+    parser.add_argument('-g', '--genes', help='[optional] comma delimited filenames of fasta files containing additional genes. ', default='')
+    parser.add_argument('-P', '--priority', help='[optional] comma delimited, ordered list of GFFs or gene fasta files that are more reliable than others. \nGenes contained in these files are preferred in all stages.', default='')
     parser.add_argument('-t', '--n_thread', help='[Default: 8] Number of threads to use. Default: 8', default=8, type=int)
     
     parser.add_argument('-o', '--orthology', metavar='nj,ml,sbh', help='[Default: nj] Method to define orthologous groups. \nnj [default], ml (for small dataset) or sbh (extremely large datasets)', default='nj')
@@ -1671,11 +1671,11 @@ PEPPA.py
     parser.add_argument('--match_len1', help='minimum match length for short genes in BLAST search. Default: 100', default=100., type=float)
     parser.add_argument('--match_prop2', help='minimum match proportion for long genes in BLAST search. Default: 0.4', default=0.4, type=float)
     parser.add_argument('--match_len2', help='minimum match length for long genes in BLAST search. Default: 400', default=400., type=float)
-    parser.add_argument('--match_frag_prop', help='Min proportion of each fragment for fragmented matches. Default: 0.25', default=0.25, type=float)
-    parser.add_argument('--match_frag_len', help='Min length of each fragment for fragmented matches. Default: 50', default=50., type=float)
+    parser.add_argument('--match_frag_prop', help='minimum proportion of each fragment for fragmented matches. Default: 0.25', default=0.25, type=float)
+    parser.add_argument('--match_frag_len', help='minimum length of each fragment for fragmented matches. Default: 50', default=50., type=float)
     
-    parser.add_argument('--link_gap', help='Consider two fragmented matches within N bases as a linked block. Default: 600', default=600., type=float)
-    parser.add_argument('--link_diff', help='Form a linked block when the covered regions in the reference gene \nand the queried genome differed by no more than this value. Default: 1.5', default=1.5, type=float)
+    parser.add_argument('--link_gap', help='consider two fragmented matches within N bases as a linked block. Default: 600', default=600., type=float)
+    parser.add_argument('--link_diff', help='form a linked block when the covered regions in the reference gene \nand the queried genome differed by no more than this value. Default: 1.5', default=1.5, type=float)
 
     parser.add_argument('--allowed_sigma', help='Allowed number of sigma for paralogous splitting. \nThe larger, the more variations are kept as inparalogs. Default: 3.', default=3., type=float)
     parser.add_argument('--pseudogene', help='A match is reported as a pseudogene if its coding region is less than a proportion of the reference gene. Default: 0.8', default=.8, type=float)

@@ -3,6 +3,7 @@ import sys, os, re, numpy as np, subprocess
 from ete3 import Tree
 from collections import defaultdict
 from scipy.optimize import curve_fit
+from scipy.stats.distributions import t
 try:
     from .modules.configure import xrange, uopen, externals, logger
 except :
@@ -50,25 +51,27 @@ def getOrtho(fname, noPseudogene=False) :
                 ortho = re.findall(r'inference=ortholog_group:([^;]+)', part[8])[0]
                 orthos = [ [o, int(aId) if aId.isdigit() else -1] for o, aId in [ o.split(':')[1:3] for o in ortho.split(',') ]]
 
-                grp.update({ ortho:(aId if ortho not in grp else -2) for ortho, aId in orthos })
+                for ortho, aId in orthos :
+                    if ortho not in grp :
+                        grp[ortho] = {ID:aId}
+                    else :
+                        grp[ortho][ID] = aId
+                #grp.update({ ortho:([aId, ID] if ortho not in grp else -2) for ortho, aId in orthos })
                 ids.add(ID)
     return groups
 
-def writeCurve(prefix, groups, pseudogene=True, n_iter=300) :
+def writeCurve(prefix, groups, pseudogene=True, n_iter=1000) :
     gtype = ['CDSs', 'genes'][int(pseudogene)]
     encode = {}
-    count = {}
     for grp in groups.values() :
         for g in grp.keys() :
             if g not in encode :
                 encode[g] = len(encode)
     mat = [ set( encode[g] for g, c in grp.items() ) for grp in groups.values() ]
     mat = [np.array(list(m)) for m in mat]
-    ids, cnts = np.unique(np.concatenate(mat), return_counts=True)
     x = np.arange(len(mat))+1
 
     curves = np.zeros([len(mat), n_iter, 2], dtype=int)
-    popts = np.zeros([n_iter, 2, 3])
     for ite in np.arange(n_iter) :
         for n in np.arange(5) :
             try :
@@ -77,27 +80,34 @@ def writeCurve(prefix, groups, pseudogene=True, n_iter=300) :
                 for id, m in enumerate(mat) :
                     genes[m] += 1
                     curves[id, ite, :] = (np.sum(genes>=1), np.sum(genes>=(id+1)) )
-                popts[ite,   0,:2]=curve_fit(func_powerlaw, x, curves[:, ite, 0], maxfev=3000)[0]
-                popts[ite,   0, 2]=(x[-1]+1)**popts[ite,  0,  0]*popts[ite,  0,  1] - (x[-1])**popts[ite,  0,  0]*popts[ite,  0,  1]
-                popts[ite,   1,:2]=curve_fit(func_powerlaw, x[1:], curves[1:, ite, 0] - curves[:-1, ite, 0], maxfev=3000)[0]
-                popts[ite,   1, 2]=(x[-1]+1)**popts[ite,  1,  0]*popts[ite,  1,  1]
                 break
             except:
                 continue
-    popts[:, 1, 0] *= -1
-    popt_sum = np.zeros([2, 3, 3])
-    for i in np.arange(2) :
-        for j in np.arange(3) :
-            popt = np.sort(popts[:, i, j])
-            popt_sum[i, j, :] = popt[int(popt.size*0.025)], popt[int(popt.size*0.5)], popt[int(popt.size*0.975)]
+    y = np.mean(curves, 1)
+    yopt1, ycov1 = curve_fit(func_powerlaw, x, y[:, 0], maxfev=3000)
+    tval1 = t.ppf(1.0 - .05/2.0, max(0, y.shape[0] - 2))
+    yci1 = np.diag(ycov1)**0.5*tval1
+
+    yopt2, ycov2 = curve_fit(func_powerlaw, x[1:], y[1:, 0] - y[:-1, 0], maxfev=3000)
+    tval2 = t.ppf(1.0 - .05/2.0, max(0, y.shape[0] - 1 - 2))
+    yci2 = np.diag(ycov2)**0.5*tval2
+
+    yopt3, ycov3 = curve_fit(func_powerlaw, x, y[:, 1], maxfev=3000)
+    tval3 = t.ppf(1.0 - .05/2.0, max(0, y.shape[0] - 2))
+    yci3 = np.diag(ycov3)**0.5*tval3
+
     with open('{0}_content.curve'.format(prefix), 'w') as fout :
         fout.write('#! No. genomes: {0}\n'.format(len(groups)))
         fout.write('#! Ave. {1} per genome: {0:.03f}\n'.format(np.mean([m.size for m in mat]), gtype))
         fout.write('#! No. pan {1}: {0}\n'.format(len(encode), gtype))
         fout.write('#! No. core {1}: {0}\n'.format(curves[-1, 0, 1], gtype))
-        fout.write('#! gamma (Heaps\' law model in DOI: 10.1016/j.mib.2008.09.006): {2:.03f}  CI95%: ({1:.03f} - {3:.03f}) {0}\n'.format(['Closed pan-genome! (gamma < 0)', 'Open pan-genome (gamma >= 0)'][int(popt_sum[0, 0, 1]>=0)], *popt_sum[0, 0]))
-        fout.write('#! alpha (Power\' law model in DOI: 10.1016/j.mib.2008.09.006): {2:.03f}  CI95%: ({1:.03f} - {3:.03f}) {0}\n'.format(['Closed pan-genome! (alpha > 1)', 'Open pan-genome (alpha <= 1)'][int(popt_sum[1, 0, 1]<=1)], *popt_sum[1, 0]))
-        fout.write('#No. genome\t(Pan-genome) Median\t2.5%\t97.5%\t|\t(Core-genome) Median\t2.5%\t97.5%\n')
+        fout.write('#! Heaps\' law model in DOI: 10.1016/j.mib.2008.09.006:\tGamma={0:.03f} +/- {1:.03f}, Kappa={2:.03f} +/- {3:.03f}, ~{4:.03f} new genes per new genome.\n'.format(\
+            yopt1[0], yci1[0], yopt1[1], yci1[1], (x[-1] + 1) ** yopt1[0] * yopt1[1] - x[-1] ** yopt1[0] * yopt1[1]))
+        fout.write('#! Power law model in DOI: 10.1016/j.mib.2008.09.006:\tAlpha={0:.03f} +/- {1:.03f}, Kappa={2:.03f} +/- {3:.03f}, ~{4:.03f} new genes per new genome.\n'.format( \
+            -yopt2[0], yci2[0], yopt2[1], yci2[1], (x[-1] + 1) ** yopt2[0] * yopt2[1]))
+        fout.write('#! Power law model for the core genome:              \tAlpha={0:.03f} +/- {1:.03f}, Kappa={2:.03f} +/- {3:.03f}, ~{4:.03f} fewer core genes per new genome.\n'.format( \
+            -yopt3[0], yci3[0], yopt3[1], yci3[1], -(x[-1] + 1) ** yopt3[0] * yopt3[1] + x[-1] ** yopt3[0] * yopt3[1]))
+        fout.write('#No. genome\t(Pan-genome)Median\t2.5%\t97.5%\t|\t(Core-genome)Median\t2.5%\t97.5%\n')
         summary = np.zeros([len(mat), 2, 5], dtype=int)
         for id, curve in enumerate(curves) :
             pan  = np.sort(curve.T[0])
@@ -106,7 +116,7 @@ def writeCurve(prefix, groups, pseudogene=True, n_iter=300) :
             core_s = [ core[int(core.size*0.025)], core[int(core.size*0.5)], core[int(core.size*0.975)] ]
             fout.write('{0}\t{1[1]}\t{1[0]}\t{1[2]}\t|\t{2[1]}\t{2[0]}\t{2[2]}\n'.format(id+1, pan_s, core_s))
     logger('Curves for {1} are saved in {0}_content.curve'.format(prefix, ['CDS', 'all genes'][int(pseudogene)]))
-    return popt_sum, summary
+    return summary
 
 def writeMatrix(prefix, ortho) :
     genomes = sorted(ortho.keys())
@@ -123,13 +133,18 @@ def writeMatrix(prefix, ortho) :
         fout.write('Shell genes\t(15% <= strains < 95%)\t{0}\n'.format(np.sum((0.95*n > presences) & (presences >= 0.15*n))))
         fout.write('Cloud genes\t(0% <= strains < 15%)\t{0}\n'.format(np.sum((0.15*n > presences) & (presences >= 0.0*n))))
         fout.write('Total genes\t(0% <= strains <= 100%)\t{0}\n'.format(presences.size))
+    logger('Summary of the pan-genome is saved in {0}_content.summary_statistics.txt'.format(prefix))
     genes = [ g[0] for g in sorted(genes.items(), key=lambda x:(-x[1], x[0])) ]
-    with open('{0}_content.Rtab'.format(prefix), 'w') as fout :
+    with open('{0}_content.Rtab'.format(prefix), 'w') as fout, open('{0}_content.csv'.format(prefix), 'w') as fout2 :
         fout.write('\t'.join(['Gene']+genomes)+'\n')
+        fout2.write(','.join(['Gene']+genomes)+'\n')
         for g in genes :
-            mat = [ ['0', '1'][ g in ortho[genome] ] for genome in genomes ]
+            mat = [ str(len(ortho[genome].get(g, {}))) for genome in genomes ]
             fout.write('\t'.join([g] + mat)+'\n')
-    logger('Gene content matrix is saved in {0}_content.matrix'.format(prefix))
+            mat2 = [ ';'.join(sorted(ortho[genome].get(g, {}).keys())) for genome in genomes ]
+            fout2.write(','.join([g] + mat2)+'\n')
+    logger('Gene content matrix is saved in {0}_content.csv'.format(prefix))
+    logger('Gene presence matrix is saved in {0}_content.Rtab'.format(prefix))
 
 def writeCGAV(prefix, ortho, pCore) :
     genomes = sorted(ortho.keys())
@@ -137,7 +152,7 @@ def writeCGAV(prefix, ortho, pCore) :
     genes = defaultdict(int)
     for gs in ortho.values() :
         for g, i in gs.items() :
-            if i > 0 :
+            if len(i) == 1 and list(i.values())[0] > 0 :
                 genes[g] += 1
     genes = sorted([ gene for gene, presence in genes.items() if presence >= minPresence ])
     profiles = []
@@ -145,7 +160,7 @@ def writeCGAV(prefix, ortho, pCore) :
         fout.write('\t'.join(['#Genome'] + genes) + '\n')
         for genome in genomes :
             grp = ortho[genome]
-            profiles.append([ max(grp.get(g, 0), 0) for g in genes ] )
+            profiles.append([ ( max(list(grp[g].values())[0], 0) if len(grp.get(g, {})) == 1 else 0) for g in genes ] )
             fout.write('{0}\t{1}\n'.format( genome, '\t'.join([ str(allele) for allele in profiles[-1] ]) ))
     
     distances = getDistance( np.array(profiles) )
@@ -196,7 +211,7 @@ def PEPPA_parser() :
             writeCGAV(prefix, ortho, param.cgav)
         if param.curve :
             writeCurve(prefix, ortho, not param.pseudogene)
-    
+    return
     
 def arg_parser(a) :
     import argparse
@@ -209,11 +224,11 @@ PEPPA_parser.py
 (5) draw rarefraction curves of all genes and only intact CDSs
 ''', formatter_class=argparse.RawTextHelpFormatter)
     parser.add_argument('-g', '--gff', help='[REQUIRED] generated PEPPA.gff file from PEPPA.py.', required=True)
-    parser.add_argument('-p', '--prefix', help='[Default: Same prefix as GFF input] Prefix for all outputs.', default=None)
+    parser.add_argument('-p', '--prefix', help='[Default: Same prefix as the GFF input] Prefix for all outputs.', default=None)
     parser.add_argument('-s', '--split', help='[optional] A folder for splitted GFF files. ', default=None)
     parser.add_argument('-P', '--pseudogene', help='[Default: Use Pseudogene] Flag to ignore pseudogenes in all analyses. ', default=False, action='store_true')
-    parser.add_argument('-m', '--matrix', help='[Default: False] Flag to NOT generate the gene present/absent matrix(.Rtab)', default=True, action='store_false')
-    parser.add_argument('-t', '--tree', help='[Default: False] Flag to generate the gene present/absent tree', default=False, action='store_true')
+    parser.add_argument('-m', '--matrix', help='[Default: False] Flag to NOT generate the gene present/absent matrix. ', default=True, action='store_false')
+    parser.add_argument('-t', '--tree', help='[Default: False] Flag to generate the gene present/absent tree. ', default=False, action='store_true')
     parser.add_argument('-a', '--cgav', help='[Default: -1] Set to an integer between 0 and 100 to apply a Core Gene Allelic Variation tree. \nThe value describes %% of presence for a gene to be included in the analysis. \nThis is similar to cgMLST tree but without an universal scheme. ', default=-1, type=int)
     parser.add_argument('-c', '--curve', help='[Default: False] Flag to generate a rarefraction curve. ', default=False, action='store_true')
     params = parser.parse_args(a)
@@ -223,6 +238,8 @@ PEPPA_parser.py
         params.prefix = params.gff.rsplit('.gff', 1)[0]
     
     return params
+
+
 if __name__ == '__main__' :
-    groups = PEPPA_parser()
-    
+    PEPPA_parser()
+
