@@ -50,7 +50,7 @@ Below is a list of all parameters in PEPPA and PEPPA_parser.
 							nj [default], ml (for small dataset) or sbh (extremely large datasets)
 	  -n, --noNeighborCheck
 							[Default: False] Flag to disable checking of neighborhood for paralog splitting.
-	  --min_cds MIN_CDS     [Default: 150] Minimum length for a gene to be used in similarity searches.
+	  --min_cds MIN_CDS     [Default: 120] Minimum length for a gene to be used in similarity searches.
 	  --incompleteCDS INCOMPLETECDS
 							[Default: ''] Allowed types of imperfection for reference genes.
 							's': allows unrecognized start codon.
@@ -79,10 +79,10 @@ Below is a list of all parameters in PEPPA and PEPPA_parser.
 	  --match_len2 MATCH_LEN2
 							minimum match length for long genes in BLAST search. Default: 400
 	  --match_frag_prop MATCH_FRAG_PROP
-							min proportion of each fragment for fragmented matches. Default: 0.25
+							minimum proportion of each fragment for fragmented matches. Default: 0.25
 	  --match_frag_len MATCH_FRAG_LEN
-							min length of each fragment for fragmented matches. Default: 50
-	  --link_gap LINK_GAP   consider two fragmented matches within N bases as a linked block. Default: 300
+							minimum length of each fragment for fragmented matches. Default: 50
+	  --link_gap LINK_GAP   consider two fragmented matches within N bases as a linked block. Default: 600
 	  --link_diff LINK_DIFF
 							form a linked block when the covered regions in the reference gene
 							and the queried genome differed by no more than this value. Default: 1.2
@@ -90,7 +90,7 @@ Below is a list of all parameters in PEPPA and PEPPA_parser.
 							allowed number of sigma for paralogous splitting.
 							The larger, the more variations are kept as inparalogs. Default: 3.
 	  --pseudogene PSEUDOGENE
-							A match is reported as a pseudogene if its coding region is less than a proportion of the reference gene. Default: 0.7
+							A match is reported as a pseudogene if its coding region is less than a proportion of the reference gene. Default: 0.8
 	  --untrusted UNTRUSTED
 							FORMAT: l,p; A gene is not reported if it is not greater than "l" and present in less than "p" of GFF files. Default: 450,0.35
 	  --continue            continue from a previously stopped run.
@@ -122,15 +122,15 @@ Parameters for PEPPA_parser.py
 	  -h, --help            show this help message and exit
 	  -g GFF, --gff GFF     [REQUIRED] generated PEPPA.gff file from PEPPA.py.
 	  -p PREFIX, --prefix PREFIX
-							[Default: Same prefix as GFF input] Prefix for all outputs.
+				[Default: Same prefix as the GFF input] Prefix for all outputs.
 	  -s SPLIT, --split SPLIT
-							[optional] A folder for splitted GFF files.
+				[optional] A folder for splitted GFF files.
 	  -P, --pseudogene      [Default: Use Pseudogene] Flag to ignore pseudogenes in all analyses.
-	  -m, --matrix          [Default: False] Flag to NOT generate the gene present/absent matrix(.Rtab)
-	  -t, --tree            [Default: False] Flag to generate the gene present/absent tree
+	  -m, --matrix          [Default: False] Flag to NOT generate the gene present/absent matrix. 
+	  -t, --tree            [Default: False] Flag to generate the gene present/absent tree. 
 	  -a CGAV, --cgav CGAV  [Default: -1] Set to an integer between 0 and 100 to apply a Core Gene Allelic Variation tree.
-							The value describes % of presence for a gene to be included in the analysis.
-							This is similar to cgMLST tree but without an universal scheme.
+				The value describes % of presence for a gene to be included in the analysis.
+				This is similar to cgMLST tree but without an universal scheme.
 	  -c, --curve           [Default: False] Flag to generate a rarefraction curve.
 
 
