@@ -49,19 +49,23 @@ PEPPA_parse.py generates:
 
 A summary table of the pan-genome, in a format similar to "summary_statistics.txt" from Roary.
 
-2. <prefix>.PEPPA.gene_content.matrix or <prefix>.PEPPA.CDS_content.matrix
+2. <prefix>.PEPPA.gene_content.csv or <prefix>.PEPPA.CDS_content.csv
+
+A comma delimited matrix of the orthologous genes in all genomes. This file is similar to "gene_presence_absence.csv" from Roary.
+
+3. <prefix>.PEPPA.gene_content.Rtab or <prefix>.PEPPA.CDS_content.Rtab
 
 A matrix of gene presence/absence in all genomes. This file is similar to "gene_presence_absence.Rtab" from Roary.
 
-3. <prefix>.gene_content.nwk or <prefix>.CDS_content.nwk
+4. <prefix>.gene_content.nwk or <prefix>.CDS_content.nwk
 
 A FastTree phylogeny built based on gene presence/absence. 
 
-4. <prefix>.gene_content.curve or <prefix>.CDS_content.curve
+5. <prefix>.gene_content.curve or <prefix>.CDS_content.curve
 
-Rarefaction curves for the pan-genome and core-genome. It also reports the gamma factor for the Heaps' law model and the alpha factor for the Power' law model. Find additional details about these factors at `https://doi.org/10.1016/j.mib.2008.09.006`_
+Rarefaction curves for the pan-genome and core-genome. It also reports the factors for the Heaps' law model and the Power law model as described in `https://doi.org/10.1016/j.mib.2008.09.006`_
 
-5. <prefix>.gene_CGAV.tree or <prefix>.CDS_CGAV.tree
+6. <prefix>.gene_CGAV.tree or <prefix>.CDS_CGAV.tree
 
 Core Genome Allelic Variation trees built by RapidNJ, based on the allelic differences of the core genes. Find additional information about this tree in `GrapeTree <https://github.com/achtman-lab/GrapeTree>`_. 
 
