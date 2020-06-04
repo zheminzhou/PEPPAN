@@ -73,17 +73,13 @@ def writeCurve(prefix, groups, pseudogene=True, n_iter=1000) :
 
     curves = np.zeros([len(mat), n_iter, 2], dtype=int)
     for ite in np.arange(n_iter) :
-        for n in np.arange(5) :
-            try :
-                np.random.shuffle(mat)
-                genes = np.zeros(len(encode), dtype=int)
-                for id, m in enumerate(mat) :
-                    genes[m] += 1
-                    curves[id, ite, :] = (np.sum(genes>=1), np.sum(genes>=(id+1)) )
-                break
-            except:
-                continue
+        np.random.shuffle(mat)
+        genes = np.zeros(len(encode), dtype=int)
+        for id, m in enumerate(mat) :
+            genes[m] += 1
+            curves[id, ite, :] = (np.sum(genes>=1), np.sum(genes>=(id+1)) )
     y = np.mean(curves, 1)
+
     yopt1, ycov1 = curve_fit(func_powerlaw, x, y[:, 0], maxfev=3000)
     tval1 = t.ppf(1.0 - .05/2.0, max(0, y.shape[0] - 2))
     yci1 = np.diag(ycov1)**0.5*tval1

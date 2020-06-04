@@ -1664,7 +1664,7 @@ PEPPA.py
     parser.add_argument('--clust_match_prop', help='minimum matches in mmseqs clusters. Default: 0.8', default=0.8, type=float)
 
     parser.add_argument('--nucl', dest='noDiamond', help='disable Diamond search. Fast but less sensitive when nucleotide identities < 0.9', default=False, action='store_true')
-    parser.add_argument('--match_identity', help='minimum identities in BLAST search. Default: 0.65', default=0.65, type=float)
+    parser.add_argument('--match_identity', help='minimum identities in BLAST search. Default: 0.5', default=0.5, type=float)
     parser.add_argument('--match_prop', help='minimum match proportion for normal genes in BLAST search. Default: 0.5', default=0.5, type=float)
     parser.add_argument('--match_len', help='minimum match length for normal genes in BLAST search. Default: 250', default=250., type=float)
     parser.add_argument('--match_prop1', help='minimum match proportion for short genes in BLAST search. Default: 0.8', default=0.8, type=float)
