@@ -63,7 +63,7 @@ A FastTree phylogeny built based on gene presence/absence.
 
 5. <prefix>.gene_content.curve or <prefix>.CDS_content.curve
 
-Rarefaction curves for the pan-genome and core-genome. It also reports the factors for the Heaps' law model and the Power law model as described in `https://doi.org/10.1016/j.mib.2008.09.006`_
+Rarefaction curves for the pan-genome and core-genome. It also reports the factors for the Heaps' law model and the Power law model as described in https://doi.org/10.1016/j.mib.2008.09.006
 
 6. <prefix>.gene_CGAV.tree or <prefix>.CDS_CGAV.tree
 
