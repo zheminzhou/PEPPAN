@@ -1,11 +1,11 @@
 
-Output for PEPPA
+Output for PEPPAN
 ========================
-There are two final output files for PEPPA:
+There are two final output files for PEPPAN:
 
-1. <prefix>.PEPPA.gff
+1. <prefix>.PEPPAN.gff
    
-This file includes all pan-genes predicted by PEPPA in GFF3 format. Intact CDSs are labeled as "CDS", disrupted genes (potential pseudogenes) are labeled as "pseudogene" and suspicious annotations ignored in the pipeline are labeled as "misc_feature" entries. 
+This file includes all pan-genes predicted by PEPPAN in GFF3 format. Intact CDSs are labeled as "CDS", disrupted genes (potential pseudogenes) are labeled as "pseudogene" and suspicious annotations ignored in the pipeline are labeled as "misc_feature" entries. 
 
 * If any of the predicted CDSs and pseudogenes overlap with original gene predictions in the input GFF files, the original gene is labeled "old_locus_tag" of the entry. 
 
@@ -17,7 +17,7 @@ This file includes all pan-genes predicted by PEPPA in GFF3 format. Intact CDSs 
 
 2. <prefix>.alleles.fna
    
-This file contains all unique alleles of all pan-genes predicted by PEPPA. <prefix>.alleles.fna can be fed into the 'BLASTdb' module in the `EToKi <https://github.com/zheminzhou/EToKi>`_ package as a seed for the whole genome MLST scheme. 
+This file contains all unique alleles of all pan-genes predicted by PEPPAN. <prefix>.alleles.fna can be fed into the 'BLASTdb' module in the `EToKi <https://github.com/zheminzhou/EToKi>`_ package as a seed for the whole genome MLST scheme. 
 
 The file looks like:
 
@@ -35,25 +35,25 @@ The header of each allele contains three parts as <source genome>:<gene name>_<a
 
 ::
 
-	GCF_000010485:NC_013654.1       CDS     PEPPA   3006268 3007248 .       -       .       ID=ST131.ml_g_2832;old_locus_tag=ECSF_RS14680:3006268-3007248;inference=ortholog_group:GCF_000010485:ECSF_RS14680:1:1-981:3006268-3007248
-	GCF_000214765:NZ_MIPU01000013.1 CDS     PEPPA   21800   22780   .       +       .       ID=ST131.ml_g_8008;old_locus_tag=ECNA114_RS18110:21800-22780;inference=ortholog_group:GCF_000010485:ECSF_RS14680:2:1-981:21800-22780
-	GCF_001566635:NZ_CP014488.1     CDS     PEPPA   3175180 3176160 .       -       .       ID=ST131.ml_g_12869;old_locus_tag=AVR74_RS15840:3175180-3176160;inference=ortholog_group:GCF_000010485:ECSF_RS14680:1:1-981:3175180-3176160
-	GCF_001577325:NZ_CP014522.1     CDS     PEPPA   3238450 3239430 .       -       .       ID=ST131.ml_g_18034;old_locus_tag=AVR76_RS16295:3238450-3239430;inference=ortholog_group:GCF_000010485:ECSF_RS14680:3:1-981:3238450-3239430
+	GCF_000010485:NC_013654.1       CDS     PEPPAN   3006268 3007248 .       -       .       ID=ST131.ml_g_2832;old_locus_tag=ECSF_RS14680:3006268-3007248;inference=ortholog_group:GCF_000010485:ECSF_RS14680:1:1-981:3006268-3007248
+	GCF_000214765:NZ_MIPU01000013.1 CDS     PEPPAN   21800   22780   .       +       .       ID=ST131.ml_g_8008;old_locus_tag=ECNA114_RS18110:21800-22780;inference=ortholog_group:GCF_000010485:ECSF_RS14680:2:1-981:21800-22780
+	GCF_001566635:NZ_CP014488.1     CDS     PEPPAN   3175180 3176160 .       -       .       ID=ST131.ml_g_12869;old_locus_tag=AVR74_RS15840:3175180-3176160;inference=ortholog_group:GCF_000010485:ECSF_RS14680:1:1-981:3175180-3176160
+	GCF_001577325:NZ_CP014522.1     CDS     PEPPAN   3238450 3239430 .       -       .       ID=ST131.ml_g_18034;old_locus_tag=AVR76_RS16295:3238450-3239430;inference=ortholog_group:GCF_000010485:ECSF_RS14680:3:1-981:3238450-3239430
    
    
-Output for PEPPA_parser
+Output for PEPPAN_parser
 ==========================
-PEPPA_parse.py generates: 
+PEPPAN_parse.py generates: 
 
-1. <prefix>.PEPPA.gene_content.summary_statistics.txt
+1. <prefix>.PEPPAN.gene_content.summary_statistics.txt
 
 A summary table of the pan-genome, in a format similar to "summary_statistics.txt" from Roary.
 
-2. <prefix>.PEPPA.gene_content.csv or <prefix>.PEPPA.CDS_content.csv
+2. <prefix>.PEPPAN.gene_content.csv or <prefix>.PEPPAN.CDS_content.csv
 
 A comma delimited matrix of the orthologous genes in all genomes. This file is similar to "gene_presence_absence.csv" from Roary.
 
-3. <prefix>.PEPPA.gene_content.Rtab or <prefix>.PEPPA.CDS_content.Rtab
+3. <prefix>.PEPPAN.gene_content.Rtab or <prefix>.PEPPAN.CDS_content.Rtab
 
 A matrix of gene presence/absence in all genomes. This file is similar to "gene_presence_absence.Rtab" from Roary.
 

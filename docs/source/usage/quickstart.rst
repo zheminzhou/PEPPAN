@@ -1,62 +1,62 @@
 Quick Start
 ***************
-If you installed PEPPA via PIP, run
+If you installed PEPPAN via PIP, run
 ::
 
-  PEPPA --testunit
+  PEPPAN --testunit
 
 to download an examples folder which contains GFF files of four *Escherichia coli* ST131 genomes. 
 
-If you installed PEPPA via git, the examples folder is already present in your PEPPA root folder. 
+If you installed PEPPAN via git, the examples folder is already present in your PEPPAN root folder. 
 
-* Test PEPPA
-
-::
-
-  PEPPA -p examples/ST131 -P examples/GCF_000010485.combined.gff.gz examples/*.gff.gz
-
-* Test PEPPA_parse
+* Test PEPPAN
 
 ::
 
-  PEPPA_parser -g examples/ST131.PEPPA.gff -s examples/PEPPA_out -t -c -a 95
+  PEPPAN -p examples/ST131 -P examples/GCF_000010485.combined.gff.gz examples/*.gff.gz
 
-Key parameters for PEPPA
+* Test PEPPAN_parse
+
+::
+
+  PEPPAN_parser -g examples/ST131.PEPPAN.gff -s examples/PEPPAN_out -t -c -a 95
+
+Key parameters for PEPPAN
 ===========================
 GFFs
 -------------------------
 
-The main input for PEPPA. The nucleotide sequences can be integrated in the same file or in a separate file. For details see `Inputs <inputs.rst>`_
+The main input for PEPPAN. The nucleotide sequences can be integrated in the same file or in a separate file. For details see `Inputs <inputs.rst>`_
 
 -p or --prefix
 -------------------------
 
 The prefix for the output files, as well as intermediate files. The final output files are:
 
-1. <prefix>.PEPPA.gff
+1. <prefix>.PEPPAN.gff
 2. <prefix>.allele.fasta
 
 For details see `Outputs <outputs.rst>`_.
 
 --match_identity FLOAT
 -------------------------
-match_identity controls the minimal identity of an alignment to be considered in the pan-genome construction. PEPPA is insensitive to the value of this parameter, as long as it is low enough to cover the genetic diversity of the genomes. However, reducing this value will increase the run time of the program. 
+match_identity controls the minimal identity of an alignment to be considered in the pan-genome construction. PEPPAN is insensitive to the value of this parameter, as long as it is low enough to cover the genetic diversity of the genomes. However, reducing this value will increase the run time of the program. 
 
-By default, PEPPA accepts a minimum match identity of 65%. The minimum match identity that has been tested (in *Mycoplasma*) is 40%. We suggest to use a lower value if you run PEPPA between genomes from different genera.
+By default, PEPPAN accepts a minimum match identity of 65%. The minimum match identity that has been tested (in *Mycoplasma*) is 40%. We suggest to use a lower value if you run PEPPAN between genomes from different genera.
 
 --min_cds INTEGER
 -------------------------
 This parameter controls the minimal size of a gene to be considered in the final pan-genome. Short genes are less reliable and also hard to detect in a similarity-based search. 
 
-By default, PEPPA ignores genes with <= 120 bps length. You can reduce the minimum size of accepted genes if you trust the original annotations (e.g., 90 bps to be consistent with the default settings in `prodigal  <http://gensoft.pasteur.fr/docs/prodigal/2.50/_README>`_). 
+By default, PEPPAN ignores genes with <= 120 bps length. You can reduce the minimum size of accepted genes if you trust the original annotations (e.g., 90 bps to be consistent with the default settings in `prodigal  <http://gensoft.pasteur.fr/docs/prodigal/2.50/_README>`_). 
 
 --pseudogene FLOAT
 -------------------------
 A coding region in the genome is assigned as a pseudogene if its length is shorter than other orthologous genes by a certain proportion.
 
-By default, PEPPA sets --pseudogene 0.8, therefore any gene that is >=80% of the representative gene will be assigned as an "intact" gene, otherwise a "pseudogene". 
+By default, PEPPAN sets --pseudogene 0.8, therefore any gene that is >=80% of the representative gene will be assigned as an "intact" gene, otherwise a "pseudogene". 
 
-See `Parameters <parameters.rst>`_ for descriptions of other parameters implemented in PEPPA. 
+See `Parameters <parameters.rst>`_ for descriptions of other parameters implemented in PEPPAN. 
 
 --orthology <nj,ml,sbh>
 -------------------------

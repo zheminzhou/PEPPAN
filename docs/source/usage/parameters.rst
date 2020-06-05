@@ -2,11 +2,11 @@ Parameters
 **********
 Please find detailed description for several important parameters in the `quickstart <quickstart.rst>`_.
 
-Below is a list of all parameters in PEPPA and PEPPA_parser.
+Below is a list of all parameters in PEPPAN and PEPPAN_parser.
 
 ::
 
-	usage: PEPPA [-h] [-p PREFIX] [-g GENES] [-P PRIORITY] [-t N_THREAD]
+	usage: PEPPAN [-h] [-p PREFIX] [-g GENES] [-P PRIORITY] [-t N_THREAD]
 				 [-o nj,ml,sbh] [-n] [--min_cds MIN_CDS]
 				 [--incompleteCDS INCOMPLETECDS] [--gtable GTABLE]
 				 [--clust_identity CLUST_IDENTITY]
@@ -21,7 +21,7 @@ Below is a list of all parameters in PEPPA and PEPPA_parser.
 				 [--feature FEATURE] [--noncoding] [--metagenome] [--testunit]
 				 [GFF [GFF ...]]
 
-	PEPPA.py
+	PEPPAN.py
 	(1) Retrieve genes and genomic sequences from GFF files and FASTA files.
 	(2) Group genes into clusters using mmseq.
 	(3) Map gene clusters back to genomes.
@@ -37,7 +37,7 @@ Below is a list of all parameters in PEPPA and PEPPA_parser.
 	optional arguments:
 	  -h, --help            show this help message and exit.
 	  -p PREFIX, --prefix PREFIX
-							[Default: PEPPA] prefix for the output files.
+							[Default: PEPPAN] prefix for the output files.
 	  -g GENES, --genes GENES
 							[optional] comma delimited filenames of fasta files containing additional genes.
 	  -P PRIORITY, --priority PRIORITY
@@ -99,20 +99,20 @@ Below is a list of all parameters in PEPPA and PEPPA_parser.
 							"--nucl --incompleteCDS sife"
 	  --metagenome          Set to metagenome mode. This is still under development. Equals to
 							"--nucl --incompleteCDS sife --clust_identity 0.99 --clust_match_prop 0.8 --match_identity 0.98 --orthology sbh"
-	  --testunit            download four E. coli ST131 genomes for testing of PEPPA.
+	  --testunit            download four E. coli ST131 genomes for testing of PEPPAN.
 
 
 
-Parameters for PEPPA_parser.py
+Parameters for PEPPAN_parser.py
 --------------------------------------
 
 ::
 
-	usage: PEPPA_parser [-h] -g GFF [-p PREFIX] [-s SPLIT] [-P] [-m] [-t]
+	usage: PEPPAN_parser [-h] -g GFF [-p PREFIX] [-s SPLIT] [-P] [-m] [-t]
 						[-a CGAV] [-c]
 
-	PEPPA_parser.py
-	(1) read <prefix>.PEPPA.gff file
+	PEPPAN_parser.py
+	(1) read <prefix>.PEPPAN.gff file
 	(2) split it into individual GFF files
 	(3) draw a present/absent matrix
 	(4) create a tree based on gene presence
@@ -120,7 +120,7 @@ Parameters for PEPPA_parser.py
 
 	optional arguments:
 	  -h, --help            show this help message and exit
-	  -g GFF, --gff GFF     [REQUIRED] generated PEPPA.gff file from PEPPA.py.
+	  -g GFF, --gff GFF     [REQUIRED] generated PEPPAN.gff file from PEPPAN.py.
 	  -p PREFIX, --prefix PREFIX
 				[Default: Same prefix as the GFF input] Prefix for all outputs.
 	  -s SPLIT, --split SPLIT

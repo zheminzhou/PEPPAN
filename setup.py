@@ -1,21 +1,21 @@
 import os, sys
 from setuptools import setup, find_packages
 #from PEPPA import __VERSION__
-__VERSION__ = '1.2'
+__VERSION__ = '1.0'
 
 with open('README.rst', encoding='utf-8') as f:
     long_description = f.read()
 
 setup(
-    name='BIO-PEPPA',
+    name='PEPPAN',
     version= __VERSION__,
     #scripts=['PEPPA.py'] ,
     author="Zhemin Zhou",
     author_email="zhemin.zhou@warwick.ac.uk",
-    description="Phylogeny Enhanded Prediction of PAn-genome https://doi.org/10.1101/2020.01.03.894154",
+    description="Phylogeny Enhanded Prediction of PAN-genome https://doi.org/10.1101/2020.01.03.894154",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/zheminzhou/PEPPA",
+    url="https://github.com/zheminzhou/PEPPAN",
     packages = ['PEPPA'],
     package_dir = {'PEPPA':'.'},
     keywords=['bioinformatics', 'microbial', 'genomics', 'MLST', 'pan-genome'],
@@ -23,8 +23,8 @@ setup(
     include_package_data=True,
     entry_points={
         'console_scripts': [
-            'PEPPA = PEPPA.PEPPA:ortho',
-            'PEPPA_parser = PEPPA.PEPPA_parser:PEPPA_parser',
+            'PEPPAN = PEPPAN.PEPPAN:ortho',
+            'PEPPAN_parser = PEPPAN.PEPPAN_parser:PEPPA_parser',
     ]},
     package_data={'PEPPA': ['LICENSE', 'README.*', 'dependencies/*', 'modules/*.py']},
     classifiers=[

@@ -1,7 +1,7 @@
 ****************
 Installation
 ****************
-PEPPA has the following dependencies:
+PEPPAN has the following dependencies:
 
 Required dependencies 
 
@@ -19,7 +19,7 @@ Installation of dependencies
 ----------------------------
 * 64-bit Linux systems
 
-**By default, you do NOT need to install any of the dependencies**. Executables for all dependencies are included as part of the PEPPA package. If the pre-compiled executables do not run on your system, or if you want to use a different version of any dependency, please install the corresponding package in your system and point to the executables in your $PATH variable. 
+**By default, you do NOT need to install any of the dependencies**. Executables for all dependencies are included as part of the PEPPAN package. If the pre-compiled executables do not run on your system, or if you want to use a different version of any dependency, please install the corresponding package in your system and point to the executables in your $PATH variable. 
 
 * bio-conda
 
@@ -42,29 +42,29 @@ You can check the installation of all dependencies with:
 
 Alternatively, you can always install each dependency by following the introductions in its link above. 
 
-Installing PEPPA
+Installing PEPPAN
 ----------------------------
 * Installing from PIP
 
 ::
 
-  pip3 install bio-peppa
+  pip3 install peppan
 
 
 * Installing from source (advanced Linux users only)
 
-Clone the latest software version from (https://github.com/zheminzhou/PEPPA), e.g.:
+Clone the latest software version from (https://github.com/zheminzhou/PEPPAN), e.g.:
 
 ::
 
   cd $HOME
-  git pull https://github.com/zheminzhou/PEPPA.git
+  git pull https://github.com/zheminzhou/PEPPAN.git
 
 Then add the following lines to your $HOME/.bashrc file:
 
 ::
 
-  export PATH=$PATH:$HOME/PEPPA/
+  export PATH=$PATH:$HOME/PEPPAN/
 
 
 Testing the installation
