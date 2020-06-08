@@ -605,7 +605,7 @@ def filt_genes(groups, ortho_groups, global_file, cfl_file, priorities, scores, 
                         region_score2 = sorted(region_score, reverse=True)
                         cut = region_score2[bestPerGenome.size*3-1]
                         if cut >= params['clust_identity'] :
-                            cut = min(region_score2[bestPerGenome.size*5] if len(region_score) > bestPerGenome.size * 5 else params['clust_identity'], np.sqrt(params['clust_identity']))
+                            cut = region_score2[bestPerGenome.size*6] if len(region_score) > bestPerGenome.size * 6 else params['clust_identity']
                         mat = mat[region_score>=cut]
                     inparalog = np.max(np.unique(mat.T[1], return_counts=True)[1])>1
                     if (not inparalog and np.min(mat[:, 3]) >= 10000 * params['clust_identity']) or len(mat) <= 1 :
