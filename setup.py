@@ -1,7 +1,7 @@
 import os, sys
 from setuptools import setup, find_packages
 #from PEPPA import __VERSION__
-__VERSION__ = '1.0'
+__VERSION__ = '1.0.2'
 
 with open('README.rst', encoding='utf-8') as f:
     long_description = f.read()
@@ -16,8 +16,8 @@ setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/zheminzhou/PEPPAN",
-    packages = ['PEPPA'],
-    package_dir = {'PEPPA':'.'},
+    packages = ['PEPPAN'],
+    package_dir = {'PEPPAN':'.'},
     keywords=['bioinformatics', 'microbial', 'genomics', 'MLST', 'pan-genome'],
     install_requires=['ete3>=3.1.1', 'numba>=0.38.0', 'numpy>=1.18.1', 'pandas>=0.24.6', 'scipy>=1.3.2'],
     include_package_data=True,
