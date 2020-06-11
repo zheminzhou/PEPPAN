@@ -1,7 +1,7 @@
 import os, sys
 from setuptools import setup, find_packages
 #from PEPPA import __VERSION__
-__VERSION__ = '1.0.2'
+__VERSION__ = '1.0.3'
 
 with open('README.rst', encoding='utf-8') as f:
     long_description = f.read()
@@ -26,7 +26,7 @@ setup(
             'PEPPAN = PEPPAN.PEPPAN:ortho',
             'PEPPAN_parser = PEPPAN.PEPPAN_parser:PEPPA_parser',
     ]},
-    package_data={'PEPPA': ['LICENSE', 'README.*', 'dependencies/*', 'modules/*.py']},
+    package_data={'PEPPAN': ['LICENSE', 'README.*', 'dependencies/*', 'modules/*.py']},
     classifiers=[
         'Development Status :: 5 - Production/Stable',
         "Programming Language :: Python :: 3.5",
