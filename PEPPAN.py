@@ -1514,19 +1514,19 @@ def write_output(prefix, prediction, genomes, clust_ref, encodes, old_prediction
                     allele_file.write('>{0}_{1}\n{2}\n'.format(gene, id, seq))
 
     #prediction = prediction[prediction.T[0] != '']
-    with open('{0}.PEPPA.gff'.format(prefix), 'w') as fout :
-        fout.write('#!gff-version 3\n#!annotation-source PEPPA from enterobase.warwick.ac.uk\n')
+    with open('{0}.PEPPAN.gff'.format(prefix), 'w') as fout :
+        fout.write('#!gff-version 3\n#!annotation-source PEPPAN from enterobase.warwick.ac.uk\n')
         for pid, pred in enumerate(prediction) :
             if pred[0] == '' : continue
             if pred[15] == 'misc_feature' :
-                fout.write('{0}\t{1}\tPEPPA\t{2}\t{3}\t.\t{4}\t.\tID={5};{7}inference={6}\n'.format(
+                fout.write('{0}\t{1}\tPEPPAN\t{2}\t{3}\t.\t{4}\t.\tID={5};{7}inference={6}\n'.format(
                     pred[5], 'misc_feature', pred[9], pred[10], pred[11],
                     '{0}_g_{1}'.format(prefix.rsplit('/', 1)[-1], pred[2]), pred[16],
                     'old_locus_tag={0}:{1}-{2};'.format(pred[0].split(':', 1)[1], pred[9], pred[10]),
                 ))
             else :
                 if pred[0] in removed :
-                    fout.write('{0}\t{1}\tPEPPA\t{2}\t{3}\t.\t{4}\t.\tID={5};{8}inference=ortholog_group:{6}{7}\n'.format(
+                    fout.write('{0}\t{1}\tPEPPAN\t{2}\t{3}\t.\t{4}\t.\tID={5};{8}inference=ortholog_group:{6}{7}\n'.format(
                         pred[5], 'misc_feature',
                         pred[9], pred[10], pred[11],
                         '{0}_g_{1}'.format(prefix.rsplit('/', 1)[-1], pred[2]), pred[13],
@@ -1535,7 +1535,7 @@ def write_output(prefix, prediction, genomes, clust_ref, encodes, old_prediction
                     ))
 
                 elif unreliable.get(pid, 1) == 2 :
-                    fout.write('{0}\t{1}\tPEPPA\t{2}\t{3}\t.\t{4}\t.\tID={5};{8}inference=ortholog_group:{6}{7}\n'.format(
+                    fout.write('{0}\t{1}\tPEPPAN\t{2}\t{3}\t.\t{4}\t.\tID={5};{8}inference=ortholog_group:{6}{7}\n'.format(
                         pred[5], 'pseudogene',
                         pred[9], pred[10], pred[11],
                         '{0}_g_{1}'.format(prefix.rsplit('/', 1)[-1], pred[2]), pred[13],
@@ -1544,7 +1544,7 @@ def write_output(prefix, prediction, genomes, clust_ref, encodes, old_prediction
                     ))
 
                 else :
-                    fout.write('{0}\t{1}\tPEPPA\t{2}\t{3}\t.\t{4}\t.\tID={5};{8}inference=ortholog_group:{6}{7}\n'.format(
+                    fout.write('{0}\t{1}\tPEPPAN\t{2}\t{3}\t.\t{4}\t.\tID={5};{8}inference=ortholog_group:{6}{7}\n'.format(
                         pred[5], 'pseudogene' if pred[15].startswith('pseudogen') else pred[15],
                         pred[9], pred[10], pred[11],
                         '{0}_g_{1}'.format(prefix.rsplit('/', 1)[-1], pred[2]), pred[13],
@@ -1553,7 +1553,7 @@ def write_output(prefix, prediction, genomes, clust_ref, encodes, old_prediction
                     ))
 
     allele_file.close()
-    logger('Pan genome annotations have been saved in {0}'.format('{0}.PEPPA.gff'.format(prefix)))
+    logger('Pan genome annotations have been saved in {0}'.format('{0}.PEPPAN.gff'.format(prefix)))
     logger('Gene allelic sequences have been saved in {0}'.format('{0}.allele.fna'.format(prefix)))
     return
 
@@ -1639,7 +1639,7 @@ def get_global_difference(geneGroups, cluFile, bsnFile, geneInGenomes, nGene = 1
 def add_args(a) :
     import argparse
     parser = argparse.ArgumentParser(description='''
-PEPPA.py
+PEPPAN
 (1) Retieve genes and genomic sequences from GFF files and FASTA files.
 (2) Group genes into clusters using mmseq.
 (3) Map gene clusters back to genomes. 
@@ -1648,7 +1648,7 @@ PEPPA.py
 (6) Re-annotate genomes using the remained of orthologs. 
 ''', formatter_class=argparse.RawTextHelpFormatter)
     parser.add_argument('GFFs', metavar='GFF', help='[REQUIRED] GFF files containing both annotations and sequences. \nIf you have sequences and GFF annotations in separate files, \nthey can also be defined as: <GFF>,<fasta>', nargs='*')
-    parser.add_argument('-p', '--prefix', help='[Default: PEPPA] prefix for the outputs. ', default='PEPPA')
+    parser.add_argument('-p', '--prefix', help='[Default: PEPPAN] prefix for the outputs. ', default='PEPPAN')
     parser.add_argument('-g', '--genes', help='[optional] comma delimited filenames of fasta files containing additional genes. ', default='')
     parser.add_argument('-P', '--priority', help='[optional] comma delimited, ordered list of GFFs or gene fasta files that are more reliable than others. \nGenes contained in these files are preferred in all stages.', default='')
     parser.add_argument('-t', '--n_thread', help='[Default: 8] Number of threads to use. Default: 8', default=8, type=int)
@@ -1686,7 +1686,7 @@ PEPPA.py
     parser.add_argument('--feature', help='feature to extract. Be cautious to change this value. DEFAULT: CDS', default='CDS')
     parser.add_argument('--noncoding', help='Set to noncoding mode. This is still under development. Equals to \n"--nucl --incompleteCDS sife"', default=False, action='store_true')
     parser.add_argument('--metagenome', help='Set to metagenome mode. This is still under development. Equals to \n"--nucl --incompleteCDS sife --clust_identity 0.99 --clust_match_prop 0.8 --match_identity 0.98 --orthology sbh"', default=False, action='store_true')
-    parser.add_argument('--testunit', help='download four E. coli ST131 genomes for testing of PEPPA.', default=False, action='store_true')
+    parser.add_argument('--testunit', help='download four E. coli ST131 genomes for testing of PEPPAN.', default=False, action='store_true')
 
     params = parser.parse_args(a)
     if params.testunit :
@@ -1729,10 +1729,10 @@ def prepare_testunit() :
     urllib.request.urlretrieve('https://github.com/zheminzhou/PEPPA/blob/master/examples/GCF_001577325.combined.gff.gz?raw=true', \
                                'examples/GCF_001577325.combined.gff.gz')
     sys.stderr.write('Folder "examples" has been created with four GFF files downloaded. \nRun:\n')
-    sys.stderr.write('$ PEPPA -p examples/ST131 -P examples/GCF_000010485.combined.gff.gz examples/*.gff.gz\n')
+    sys.stderr.write('$ PEPPAN -p examples/ST131 -P examples/GCF_000010485.combined.gff.gz examples/*.gff.gz\n')
     sys.stderr.write('To test the main program. And then run:\n')
-    sys.stderr.write('$ PEPPA_parser -g examples/ST131.PEPPA.gff -s examples/PEPPA_out -t -c -a 95\n')
-    sys.stderr.write('To test PEPPA_parser\n')
+    sys.stderr.write('$ PEPPAN_parser -g examples/ST131.PEPPAN.gff -s examples/PEPPAN_out -t -c -a 95\n')
+    sys.stderr.write('To test PEPPAN_parser\n')
 
 def encodeNames(genomes, genes, geneFiles, labelFile, reuse=False) :
     taxon = {g[0] for g in genomes.values()}

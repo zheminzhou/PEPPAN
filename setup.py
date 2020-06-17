@@ -1,7 +1,7 @@
 import os, sys
 from setuptools import setup, find_packages
 #from PEPPA import __VERSION__
-__VERSION__ = '1.0.3'
+__VERSION__ = '1.0.5'
 
 with open('README.rst', encoding='utf-8') as f:
     long_description = f.read()
@@ -19,7 +19,7 @@ setup(
     packages = ['PEPPAN'],
     package_dir = {'PEPPAN':'.'},
     keywords=['bioinformatics', 'microbial', 'genomics', 'MLST', 'pan-genome'],
-    install_requires=['ete3>=3.1.1', 'numba>=0.38.0', 'numpy>=1.18.1', 'pandas>=0.24.6', 'scipy>=1.3.2'],
+    install_requires=['ete3>=3.1.1', 'numba>=0.38.0', 'numpy>=1.18.1', 'pandas>=0.24.2', 'scipy>=1.3.2'],
     include_package_data=True,
     entry_points={
         'console_scripts': [
