@@ -197,4 +197,3 @@ def transeq(seq, frame=7, transl_table=None, markStarts=False) :
 def logger(log, pipe=sys.stderr) :
     pipe.write('{0}\t{1}\n'.format(str(datetime.now()), log))
     pipe.flush()
-

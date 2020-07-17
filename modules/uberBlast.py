@@ -580,7 +580,7 @@ def uberBlast(args, extPool=None) :
     parser.add_argument('-f', '--filter', help='[DEFAULT: False] Remove secondary alignments if they overlap with any other regions', default=False, action='store_true')
     parser.add_argument('--filter_cov', help='[DEFAULT: 0.9] ', default=0.9, type=float)
     parser.add_argument('--filter_score', help='[DEFAULT: 0] ', default=0., type=float)
-    parser.add_argument('-m', '--linear_merge', help='[DEFAULT: False] Merge consective alignments', default=False, action='store_true')
+    parser.add_argument('-m', '--linear_merge', help='[DEFAULT: False] Merge consecutive alignments', default=False, action='store_true')
     parser.add_argument('--merge_gap', help='[DEFAULT: 600] ', default=600., type=float)
     parser.add_argument('--merge_diff', help='[DEFAULT: 1.5] ', default=1.5, type=float)
     parser.add_argument('-O', '--return_overlap', help='[DEFAULT: False] Report overlapped alignments', default=False, action='store_true')

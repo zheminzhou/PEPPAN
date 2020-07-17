@@ -1,7 +1,7 @@
 import os, sys
 from setuptools import setup, find_packages
 #from PEPPA import __VERSION__
-__VERSION__ = '1.0.5'
+__VERSION__ = '1.0.6'
 
 with open('README.rst', encoding='utf-8') as f:
     long_description = f.read()

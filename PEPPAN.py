@@ -226,7 +226,7 @@ def get_similar_pairs(clust, priorities, params) :
         self_bsn = uberBlast('-r {0} -q {0} --blastn --min_id {1} --min_cov {2} -t {3} --min_ratio {4} -e 3,3 -p --gtable {5}'.format(\
             clust, params['match_identity'] - 0.05, params['match_frag_len'], params['n_thread'], params['match_frag_prop'], params['gtable']).split(), pool)
     else :
-        self_bsn = uberBlast('-r {0} -q {0} --blastn --diamondSELF -s 1 --min_id {1} --min_cov {2} -t {3} --min_ratio {4} -e 3,3 -p --gtable {5}'.format(\
+        self_bsn = uberBlast('-r {0} -q {0} --blastn --diamond -s 1 --min_id {1} --min_cov {2} -t {3} --min_ratio {4} -e 3,3 -p --gtable {5}'.format(\
             clust, params['match_identity'] - 0.05, params['match_frag_len'], params['n_thread'], params['match_frag_prop'], params['gtable']).split(), pool)
     self_bsn.T[:2] = self_bsn.T[:2].astype(int)
     presence, ortho_pairs = {}, {}
@@ -239,19 +239,29 @@ def get_similar_pairs(clust, priorities, params) :
         elif presence[part[0]] == 0 :
             continue
         iden, qs, qe, ss, se, ql, sl = float(part[2]), float(part[6]), float(part[7]), float(part[8]), float(part[9]), float(part[12]), float(part[13])
-        if presence.get(part[1], 1) == 0 or ss >= se :
+        if presence.get(part[1], 1) == 0 :
             continue
-        if ss < se and part[0] != part[1] and iden >= params['clust_identity'] and qs%3 == ss%3 and (ql-qe)%3 == (sl-se)%3 :
-            if ql <= sl :
-                if qe - qs + 1 >= np.sqrt(params['clust_match_prop']) * sl and priorities[part[0]][0] >= priorities[part[1]][0] :
-                    cluGroups.append([int(part[1]), int(part[0]), int(iden*10000.)])
-                    presence[part[0]] = 0
+        qa = qe - qs + 1
+        sa = abs(se - ss) + 1
+        if part[0] != part[1] and iden >= params['clust_identity'] :
+            if ss > se or (qs%3 != ss%3 and (ql-qe)%3 == (sl-se)%3) :
+                if qa >= params['clust_match_prop'] * ql or sa >= params['clust_match_prop'] * sl :
+                    ortho_pairs[tuple(sorted([part[0], part[1]]))] = -2
                     continue
-            elif se - ss + 1 >= np.sqrt(params['clust_match_prop']) * ql and priorities[part[0]][0] <= priorities[part[1]][0] :
-                cluGroups.append([int(part[0]), int(part[1]), int(iden*10000.)])
-                presence[part[1]] = 0
-                continue
-                
+            elif ss < se and qs%3 == ss%3 and (ql-qe)%3 == (sl-se)%3 :
+                if ql <= sl :
+                    if qa >= np.sqrt(params['clust_match_prop']) * sl and priorities[part[0]][0] >= priorities[part[1]][0] :
+                        cluGroups.append([int(part[1]), int(part[0]), int(iden*10000.)])
+                        presence[part[0]] = 0
+                        continue
+                elif sa >= np.sqrt(params['clust_match_prop']) * ql and priorities[part[0]][0] <= priorities[part[1]][0] :
+                    cluGroups.append([int(part[0]), int(part[1]), int(iden*10000.)])
+                    presence[part[1]] = 0
+                    continue
+
+        if ss >= se :
+            continue
+
         if len(save) > 0 and np.any(save[0][:2] != part[:2]) :
             if len(save) >= 50 :
                 presence[save[0][1]] = 0
@@ -281,7 +291,7 @@ def get_similar_pairs(clust, priorities, params) :
         clu = np.vstack([clu, cluGroups])
         clu = clu[np.argsort(-clu.T[2])]
         np.save(params['clust'].rsplit('.',1)[0] + '.npy', clu)
-    return np.array([[k[0], k[1], v] for k, v in ortho_pairs.items()], dtype=int)
+    return np.array([[k[0], k[1], v] for k, v in ortho_pairs.items() if v != 0], dtype=int)
 
 @nb.jit('i8[:,:,:](u1[:,:], i8[:,:,:])', nopython=True)
 def compare_seq(seqs, diff) :
@@ -513,6 +523,8 @@ def load_conflict(data) :
     return conflicts
 
 def filt_genes(groups, ortho_groups, global_file, cfl_file, priorities, scores, encodes) :
+    conflicting = ortho_groups[ortho_groups.T[2] < 0]
+    conflicting = np.vstack([conflicting[:, :2], conflicting[:, [1,0]]])*1000
     ortho_groups = np.vstack([ortho_groups[:, :2], ortho_groups[:, [1,0]]])*1000
     priorities = { k*1000:v for k, v in priorities.items() }
     scores = { k*1000:v for k, v in scores.items() }
@@ -545,9 +557,7 @@ def filt_genes(groups, ortho_groups, global_file, cfl_file, priorities, scores, 
                     else :
                         m[3] = 0 if v > 0 else -m[3]
                 if present_iden < (params['clust_identity']-0.02)*10000 :
-                    genes.pop(gene, None)
-                    scores.pop(gene, None)
-                    conflicts.pop(gene, None)
+                    exclude_gene(gene, scores, genes, conflicts, conflicting)
                 else :
                     tmpSet[gene] = mat[mat.T[3] != 0]
         if len(genes) < minSet :
@@ -687,9 +697,7 @@ def filt_genes(groups, ortho_groups, global_file, cfl_file, priorities, scores, 
                             used2[g2] = gene+1000 if gs == 2 else 0
                     
             if idens < (params['clust_identity']-0.02)*10000 :
-                scores.pop(gene)
-                genes.pop(gene)
-                conflicts.pop(gene)
+                exclude_gene(gene, scores, genes, conflicts, conflicting)
                 continue
             mat = mat[mat.T[3] > 0]
             
@@ -710,9 +718,8 @@ def filt_genes(groups, ortho_groups, global_file, cfl_file, priorities, scores, 
                 continue
             else :
                 pangene = gene
-            scores.pop(gene)
-            genes.pop(gene)
-            conflicts.pop(gene)
+            exclude_gene(gene, scores, genes, conflicts, conflicting)
+
             pangenome[gene] = pangene
             used.update(used2)
             
@@ -725,6 +732,16 @@ def filt_genes(groups, ortho_groups, global_file, cfl_file, priorities, scores, 
             mat_out.append([pangene_name, gene_name, min_rank, mat])
     mat_out.append([0, 0, 0, []])
     return 
+
+def exclude_gene(gene, scores, genes, conflicts, conflicting) :
+    scores.pop(gene, None)
+    genes.pop(gene, None)
+    conflicts.pop(gene, None)
+    for g in conflicting[conflicting.T[0] == gene, 1]:
+        scores.pop(g, None)
+        genes.pop(g, None)
+        conflicts.pop(g, None)
+
 
 def load_priority(priority_list, genes, encodes) :
     file_priority = { encodes[fn]:id for id, fnames in enumerate(priority_list.split(',')) for fn in fnames.split(':') }
@@ -834,16 +851,18 @@ def iter_map_bsn(data) :
     size = np.ceil(np.vectorize(lambda n:len(n))(bsn.T[4])/3).astype(int)
     bsn.T[4] = [ (b[:s]*25+b[s:2*s]*5 + np.concatenate([b, np.zeros(-b.shape[0]%3, dtype=int)])[2*s:]).astype(np.uint8) for b, s in zip(bsn.T[4], size) ]
     
-    orthoGroup = np.load(orthoGroup, allow_pickle=True)
-    orthoGroup = dict([[(g[0], g[1]), 1] for g in orthoGroup] + [[(g[1], g[0]), 1] for g in orthoGroup])
     if overlap.shape[0] :
+        orthoGroup = np.load(orthoGroup, allow_pickle=True)
+        orthoGroup = orthoGroup[orthoGroup.T[2] != 0]
+        orthoGroup = dict(
+            [[(g[0], g[1]), 1 if g[2] > 0 else -1] for g in orthoGroup] + \
+            [[(g[1], g[0]), 1 if g[2] > 0 else -1] for g in orthoGroup])
         ovl_score = np.vectorize(lambda m,n:0 if m == n else orthoGroup.get((m,n), 2))(bsn[overlap.T[0], 0], bsn[overlap.T[1], 0])
         overlap = np.hstack([overlap, ovl_score[:, np.newaxis]])
+        overlap = overlap[ovl_score >= 0]
     else :
         overlap = np.zeros([0, 3], dtype=np.int64)
-    
-    #if np.sum(blastab.T[0] == 14994) > 1 :
-    #    print('a')
+
     np.savez_compressed(out_prefix+'.bsn.npz', bsn=bsn, ovl=overlap)
     return out_prefix
 
@@ -1335,8 +1354,10 @@ def write_output(prefix, prediction, genomes, clust_ref, encodes, old_prediction
                         groups[grp].extend(groups.pop(gene, {}))
             tags = {ggg: g for g, gg in groups.items() for ggg in gg}
         if orthoPair and os.path.exists(orthoPair) :
-            clust = np.load(orthoPair, allow_pickle=True)
-            clust = clust[np.all(in1d(clust, queries).reshape(clust.shape), 1)]
+            op = np.load(orthoPair, allow_pickle=True)
+            cc = set(op[op.T[2] < 0, :2].ravel().tolist())
+            clust = op[np.all(in1d(op[:, :2], queries).reshape([op.shape[0], 2]), 1)]
+            clust = clust[clust.T[2] > 0]
             for g1, g2, _ in clust :
                 t1, t2 = tags[g1], tags[g2]
                 for g in groups[t2] :
@@ -1344,11 +1365,19 @@ def write_output(prefix, prediction, genomes, clust_ref, encodes, old_prediction
                 groups[t1].extend(groups.pop(t2))
             groups = {g:sorted(gg) for g, gg in groups.items()}
             tags = {ggg:gg[0] for g, gg in groups.items() for ggg in gg}
+            for g in tags :
+                if g in cc :
+                    tags[g] = -1
         if tags :
             decodes = {v:k for k, v in encodes.items()}
             for g in old_to_add :
                 if g[15] == 'CDS' :
-                    g[0] = decodes[tags[encodes[g[0]]]]
+                    nt = tags[encodes[g[0]]]
+                    if nt > 0 :
+                        g[0] = decodes[nt]
+                    else :
+                        g[15] = 'misc_feature'
+                        g[16] = 'Fragment_of_larger_gene'
 
     # reorder after adding old genes
     try :
